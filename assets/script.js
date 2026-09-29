@@ -142,6 +142,7 @@ const $$ = (selector) =>
 ======================================================= */
 
 function formatRupiah(value) {
+
     return new Intl.NumberFormat(
         "id-ID",
         {
@@ -154,6 +155,7 @@ function formatRupiah(value) {
 
 
 function createId() {
+
     return (
         Date.now().toString(36)
         + "-"
@@ -165,6 +167,7 @@ function createId() {
 
 
 function escapeHTML(value) {
+
     const div =
         document.createElement("div");
 
@@ -176,7 +179,9 @@ function escapeHTML(value) {
 
 
 function loadData(key, fallback) {
+
     try {
+
         const data =
             localStorage.getItem(key);
 
@@ -190,13 +195,16 @@ function loadData(key, fallback) {
         return parsed ?? fallback;
 
     } catch {
+
         return fallback;
     }
 }
 
 
 function saveData(key, data) {
+
     try {
+
         localStorage.setItem(
             key,
             JSON.stringify(data)
@@ -205,23 +213,34 @@ function saveData(key, data) {
         return true;
 
     } catch {
+
         return false;
     }
 }
 
 
 function showError(selector, message) {
-    const element = $(selector);
+
+    const element =
+        $(selector);
 
     if (element) {
-        element.textContent = message;
+
+        element.textContent =
+            message;
     }
 }
 
 
 function clearErrors(selectors) {
+
     selectors.forEach(selector => {
-        showError(selector, "");
+
+        showError(
+            selector,
+            ""
+        );
+
     });
 }
 
@@ -232,6 +251,7 @@ function setInvalid(
     invalid,
     message = ""
 ) {
+
     const input =
         $(inputSelector);
 
@@ -241,18 +261,22 @@ function setInvalid(
 
     input.setAttribute(
         "aria-invalid",
-        invalid ? "true" : "false"
+        invalid
+            ? "true"
+            : "false"
     );
 
     showError(
         errorSelector,
-        invalid ? message : ""
+        invalid
+            ? message
+            : ""
     );
 }
 
 
 /* =======================================================
-   6. TAB + HASH ROUTING
+   6. TAB + HASH ROUTING + ACCESSIBILITY
 ======================================================= */
 
 function getTabFromHash() {
@@ -264,14 +288,24 @@ function getTabFromHash() {
             .trim();
 
     const routes = {
-        pengeluaran: "expense",
-        expense: "expense",
 
-        bookmark: "bookmark",
-        bookmarks: "bookmark",
+        pengeluaran:
+            "expense",
 
-        kuis: "quiz",
-        quiz: "quiz"
+        expense:
+            "expense",
+
+        bookmark:
+            "bookmark",
+
+        bookmarks:
+            "bookmark",
+
+        kuis:
+            "quiz",
+
+        quiz:
+            "quiz"
     };
 
     return routes[hash] || null;
@@ -281,12 +315,18 @@ function getTabFromHash() {
 function getHashFromTab(tabName) {
 
     const routes = {
-        expense: "pengeluaran",
-        bookmark: "bookmark",
-        quiz: "kuis"
+
+        expense:
+            "pengeluaran",
+
+        bookmark:
+            "bookmark",
+
+        quiz:
+            "kuis"
     };
 
-    return routes[tabName] || "";
+    return routes[tabName] || "pengeluaran";
 }
 
 
@@ -302,43 +342,100 @@ function activateTab(
         "quiz"
     ];
 
-    if (!validTabs.includes(tabName)) {
-        tabName = "expense";
+    if (
+        !validTabs.includes(tabName)
+    ) {
+
+        tabName =
+            "expense";
     }
 
-    $$(".tab-button").forEach(button => {
 
-        const active =
-            button.dataset.tab === tabName;
+    const buttons =
+        $$(".tab-button");
+
+    const panels =
+        $$(".tab-panel");
+
+
+    /*
+    -------------------------------------------------------
+    UPDATE BUTTON TAB
+    -------------------------------------------------------
+    */
+
+    buttons.forEach(button => {
+
+        const isActive =
+            button.dataset.tab ===
+            tabName;
+
 
         button.classList.toggle(
             "active",
-            active
+            isActive
         );
+
 
         button.setAttribute(
             "aria-selected",
-            String(active)
+            String(isActive)
         );
+
+
+        /*
+        Tab yang aktif bisa
+        menerima fokus keyboard.
+        */
+
+        button.setAttribute(
+            "tabindex",
+            isActive
+                ? "0"
+                : "-1"
+        );
+
     });
 
 
-    $$(".tab-panel").forEach(panel => {
+    /*
+    -------------------------------------------------------
+    UPDATE PANEL
+    -------------------------------------------------------
+    */
 
-        const active =
+    panels.forEach(panel => {
+
+        const isActive =
             panel.id ===
             `${tabName}-panel`;
 
+
         panel.classList.toggle(
             "active",
-            active
+            isActive
         );
 
-        panel.hidden = !active;
+
+        /*
+        hidden membantu screen reader
+        mengetahui panel mana yang aktif.
+        */
+
+        panel.hidden =
+            !isActive;
+
     });
 
 
+    /*
+    -------------------------------------------------------
+    SAVE ACTIVE TAB
+    -------------------------------------------------------
+    */
+
     if (save) {
+
         localStorage.setItem(
             STORAGE_KEYS.activeTab,
             tabName
@@ -346,25 +443,27 @@ function activateTab(
     }
 
 
+    /*
+    -------------------------------------------------------
+    UPDATE HASH URL
+    -------------------------------------------------------
+    */
+
     if (updateUrl) {
 
-        const hash =
-            getHashFromTab(tabName);
+        const targetHash =
+            `#${getHashFromTab(tabName)}`;
 
-        const target =
-            hash
-                ? `#${hash}`
-                : "";
 
         if (
             window.location.hash !==
-            target
+            targetHash
         ) {
 
-            history.replaceState(
+            window.history.replaceState(
                 null,
                 "",
-                `${window.location.pathname}${window.location.search}${target}`
+                `${window.location.pathname}${window.location.search}${targetHash}`
             );
         }
     }
@@ -373,24 +472,144 @@ function activateTab(
 
 function initializeTabs() {
 
-    $$(".tab-button").forEach(button => {
+    const buttons =
+        $$(".tab-button");
 
-        button.addEventListener(
-            "click",
-            () => {
 
-                activateTab(
-                    button.dataset.tab
-                );
+    buttons.forEach(
+        (button, index) => {
 
-            }
-        );
+            /*
+            ------------------------------------------------
+            CLICK
+            ------------------------------------------------
+            */
 
-    });
+            button.addEventListener(
+                "click",
+                () => {
 
+                    activateTab(
+                        button.dataset.tab,
+                        true,
+                        true
+                    );
+
+                }
+            );
+
+
+            /*
+            ------------------------------------------------
+            KEYBOARD NAVIGATION
+            ------------------------------------------------
+
+            ArrowRight = tab berikutnya
+            ArrowLeft  = tab sebelumnya
+            Home       = tab pertama
+            End        = tab terakhir
+            ------------------------------------------------
+            */
+
+            button.addEventListener(
+                "keydown",
+                event => {
+
+                    let newIndex =
+                        index;
+
+
+                    if (
+                        event.key ===
+                        "ArrowRight"
+                    ) {
+
+                        newIndex =
+                            (
+                                index + 1
+                            ) %
+                            buttons.length;
+                    }
+
+
+                    if (
+                        event.key ===
+                        "ArrowLeft"
+                    ) {
+
+                        newIndex =
+                            (
+                                index -
+                                1 +
+                                buttons.length
+                            ) %
+                            buttons.length;
+                    }
+
+
+                    if (
+                        event.key ===
+                        "Home"
+                    ) {
+
+                        newIndex =
+                            0;
+                    }
+
+
+                    if (
+                        event.key ===
+                        "End"
+                    ) {
+
+                        newIndex =
+                            buttons.length -
+                            1;
+                    }
+
+
+                    if (
+                        newIndex !==
+                        index
+                    ) {
+
+                        event.preventDefault();
+
+
+                        const nextButton =
+                            buttons[
+                                newIndex
+                            ];
+
+
+                        nextButton.focus();
+
+
+                        activateTab(
+                            nextButton
+                                .dataset
+                                .tab,
+                            true,
+                            true
+                        );
+                    }
+
+                }
+            );
+
+        }
+    );
+
+
+    /*
+    -------------------------------------------------------
+    INITIAL ACTIVE TAB
+    -------------------------------------------------------
+    */
 
     const urlTab =
         getTabFromHash();
+
 
     const savedTab =
         localStorage.getItem(
@@ -401,17 +620,27 @@ function initializeTabs() {
     activateTab(
         urlTab || savedTab,
         true,
-        Boolean(urlTab)
+        true
     );
 
+
+    /*
+    -------------------------------------------------------
+    HASH CHANGE
+    -------------------------------------------------------
+    */
 
     window.addEventListener(
         "hashchange",
         () => {
 
-            activateTab(
+            const nextTab =
                 getTabFromHash()
-                || "expense",
+                || "expense";
+
+
+            activateTab(
+                nextTab,
                 true,
                 false
             );
@@ -429,6 +658,7 @@ function validateTransaction(data) {
 
     let valid = true;
 
+
     clearErrors([
         "#transaction-title-error",
         "#transaction-amount-error",
@@ -440,12 +670,17 @@ function validateTransaction(data) {
     const titleInvalid =
         !data.title.trim();
 
+
     const amountInvalid =
-        !Number.isFinite(data.amount)
+        !Number.isFinite(
+            data.amount
+        )
         || data.amount <= 0;
+
 
     const dateInvalid =
         !data.date;
+
 
     const categoryInvalid =
         !data.category.trim();
@@ -489,6 +724,7 @@ function validateTransaction(data) {
         || dateInvalid
         || categoryInvalid
     ) {
+
         valid = false;
     }
 
@@ -505,7 +741,9 @@ function addTransaction(event) {
 
     event.preventDefault();
 
+
     const data = {
+
         title:
             $("#transaction-title")
                 .value
@@ -532,16 +770,25 @@ function addTransaction(event) {
     };
 
 
-    if (!validateTransaction(data)) {
+    if (
+        !validateTransaction(data)
+    ) {
+
         return;
     }
 
 
     transactions.push({
-        id: createId(),
+
+        id:
+            createId(),
+
         ...data,
+
         createdAt:
-            new Date().toISOString()
+            new Date()
+                .toISOString()
+
     });
 
 
@@ -552,6 +799,7 @@ function addTransaction(event) {
 
 
     event.target.reset();
+
 
     clearErrors([
         "#transaction-title-error",
@@ -585,9 +833,11 @@ function getFilteredTransactions() {
             .toLowerCase()
             .trim();
 
+
     const filter =
         $("#transaction-filter")
             .value;
+
 
     const sort =
         $("#transaction-sort")
@@ -595,60 +845,87 @@ function getFilteredTransactions() {
 
 
     let result =
-        transactions.filter(transaction => {
+        transactions.filter(
+            transaction => {
 
-            const matchesSearch =
-                !search
-                || transaction.title
-                    .toLowerCase()
-                    .includes(search)
-                || transaction.category
-                    .toLowerCase()
-                    .includes(search);
-
-
-            const matchesFilter =
-                filter === "all"
-                || transaction.type === filter;
+                const matchesSearch =
+                    !search
+                    ||
+                    transaction.title
+                        .toLowerCase()
+                        .includes(search)
+                    ||
+                    transaction.category
+                        .toLowerCase()
+                        .includes(search);
 
 
-            return (
-                matchesSearch
-                && matchesFilter
-            );
+                const matchesFilter =
+                    filter === "all"
+                    ||
+                    transaction.type ===
+                    filter;
 
-        });
 
-
-    result.sort((a, b) => {
-
-        switch (sort) {
-
-            case "oldest":
                 return (
-                    new Date(a.date)
-                    - new Date(b.date)
+                    matchesSearch
+                    &&
+                    matchesFilter
                 );
+            }
+        );
 
-            case "highest":
-                return b.amount - a.amount;
 
-            case "lowest":
-                return a.amount - b.amount;
+    result.sort(
+        (a, b) => {
 
-            case "title":
-                return a.title.localeCompare(
-                    b.title
-                );
+            switch (sort) {
 
-            case "newest":
-            default:
-                return (
-                    new Date(b.date)
-                    - new Date(a.date)
-                );
+                case "oldest":
+
+                    return (
+                        new Date(a.date)
+                        -
+                        new Date(b.date)
+                    );
+
+
+                case "highest":
+
+                    return (
+                        b.amount -
+                        a.amount
+                    );
+
+
+                case "lowest":
+
+                    return (
+                        a.amount -
+                        b.amount
+                    );
+
+
+                case "title":
+
+                    return a.title.localeCompare(
+                        b.title
+                    );
+
+
+                case "newest":
+
+                default:
+
+                    return (
+                        new Date(b.date)
+                        -
+                        new Date(a.date)
+                    );
+            }
+
         }
-    });
+    );
 
 
     return result;
@@ -664,6 +941,12 @@ function renderTransactions() {
     const container =
         $("#transaction-list");
 
+
+    if (!container) {
+        return;
+    }
+
+
     const data =
         getFilteredTransactions();
 
@@ -671,7 +954,10 @@ function renderTransactions() {
     if (!data.length) {
 
         container.innerHTML = `
-            <div class="empty-state">
+            <div
+                class="empty-state"
+                role="status"
+            >
                 Tidak ada transaksi yang ditemukan.
             </div>
         `;
@@ -681,100 +967,127 @@ function renderTransactions() {
 
 
     container.innerHTML =
-        data.map(transaction => {
+        data
+            .map(
+                transaction => {
 
-            const income =
-                transaction.type === "income";
+                    const income =
+                        transaction.type ===
+                        "income";
 
-            return `
-                <article
-                    class="list-item"
-                    data-id="${escapeHTML(transaction.id)}"
-                >
 
-                    <div class="item-info">
-
-                        <span
-                            class="type-badge ${
-                                income
-                                    ? "type-income"
-                                    : "type-expense"
-                            }"
+                    return `
+                        <article
+                            class="list-item"
+                            data-id="${escapeHTML(
+                                transaction.id
+                            )}"
                         >
-                            ${
-                                income
-                                    ? "PEMASUKAN"
-                                    : "PENGELUARAN"
-                            }
-                        </span>
 
-                        <h3>
-                            ${escapeHTML(
-                                transaction.title
-                            )}
-                        </h3>
+                            <div class="item-info">
 
-                        <p>
-                            Kategori:
-                            ${escapeHTML(
-                                transaction.category
-                            )}
-                        </p>
+                                <span
+                                    class="type-badge ${
+                                        income
+                                            ? "type-income"
+                                            : "type-expense"
+                                    }"
+                                >
+                                    ${
+                                        income
+                                            ? "PEMASUKAN"
+                                            : "PENGELUARAN"
+                                    }
+                                </span>
 
-                        <p>
-                            Tanggal:
-                            ${escapeHTML(
-                                transaction.date
-                            )}
-                        </p>
 
-                    </div>
+                                <h3>
+                                    ${escapeHTML(
+                                        transaction.title
+                                    )}
+                                </h3>
 
-                    <div>
 
-                        <div
-                            class="amount ${
-                                income
-                                    ? "income"
-                                    : "expense"
-                            }"
-                        >
-                            ${income ? "+" : "-"}
-                            ${formatRupiah(
-                                transaction.amount
-                            )}
-                        </div>
+                                <p>
+                                    Kategori:
+                                    ${escapeHTML(
+                                        transaction.category
+                                    )}
+                                </p>
 
-                        <div class="item-actions">
 
-                            <button
-                                type="button"
-                                class="btn btn-primary btn-small"
-                                data-action="edit-transaction"
-                                data-id="${escapeHTML(transaction.id)}"
-                                aria-label="Edit ${escapeHTML(transaction.title)}"
-                            >
-                                Edit
-                            </button>
+                                <p>
+                                    Tanggal:
+                                    ${escapeHTML(
+                                        transaction.date
+                                    )}
+                                </p>
 
-                            <button
-                                type="button"
-                                class="btn btn-danger btn-small"
-                                data-action="delete-transaction"
-                                data-id="${escapeHTML(transaction.id)}"
-                                aria-label="Hapus ${escapeHTML(transaction.title)}"
-                            >
-                                Hapus
-                            </button>
+                            </div>
 
-                        </div>
 
-                    </div>
+                            <div>
 
-                </article>
-            `;
+                                <div
+                                    class="amount ${
+                                        income
+                                            ? "income"
+                                            : "expense"
+                                    }"
+                                >
+                                    ${
+                                        income
+                                            ? "+"
+                                            : "-"
+                                    }
+                                    ${formatRupiah(
+                                        transaction.amount
+                                    )}
+                                </div>
 
-        }).join("");
+
+                                <div
+                                    class="item-actions"
+                                >
+
+                                    <button
+                                        type="button"
+                                        class="btn btn-primary btn-small"
+                                        data-action="edit-transaction"
+                                        data-id="${escapeHTML(
+                                            transaction.id
+                                        )}"
+                                        aria-label="Edit ${escapeHTML(
+                                            transaction.title
+                                        )}"
+                                    >
+                                        Edit
+                                    </button>
+
+
+                                    <button
+                                        type="button"
+                                        class="btn btn-danger btn-small"
+                                        data-action="delete-transaction"
+                                        data-id="${escapeHTML(
+                                            transaction.id
+                                        )}"
+                                        aria-label="Hapus ${escapeHTML(
+                                            transaction.title
+                                        )}"
+                                    >
+                                        Hapus
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+                        </article>
+                    `;
+                }
+            )
+            .join("");
 }
 
 
@@ -797,11 +1110,18 @@ function updateTransactionSummary() {
             transaction.type ===
             "income"
         ) {
+
             income +=
-                Number(transaction.amount);
+                Number(
+                    transaction.amount
+                );
+
         } else {
+
             expense +=
-                Number(transaction.amount);
+                Number(
+                    transaction.amount
+                );
         }
     }
 
@@ -810,14 +1130,37 @@ function updateTransactionSummary() {
         income - expense;
 
 
-    $("#total-income").textContent =
-        formatRupiah(income);
+    const totalIncome =
+        $("#total-income");
 
-    $("#total-expense").textContent =
-        formatRupiah(expense);
 
-    $("#total-balance").textContent =
-        formatRupiah(balance);
+    const totalExpense =
+        $("#total-expense");
+
+
+    const totalBalance =
+        $("#total-balance");
+
+
+    if (totalIncome) {
+
+        totalIncome.textContent =
+            formatRupiah(income);
+    }
+
+
+    if (totalExpense) {
+
+        totalExpense.textContent =
+            formatRupiah(expense);
+    }
+
+
+    if (totalBalance) {
+
+        totalBalance.textContent =
+            formatRupiah(balance);
+    }
 }
 
 
@@ -844,6 +1187,7 @@ function deleteTransaction(id) {
             `Hapus transaksi "${item.title}"?`
         )
     ) {
+
         return;
     }
 
@@ -862,6 +1206,7 @@ function deleteTransaction(id) {
 
 
     renderTransactions();
+
     updateTransactionSummary();
 }
 
@@ -887,17 +1232,22 @@ function openTransactionEdit(id) {
     $("#edit-transaction-id").value =
         item.id;
 
+
     $("#edit-transaction-title").value =
         item.title;
+
 
     $("#edit-transaction-amount").value =
         item.amount;
 
+
     $("#edit-transaction-type").value =
         item.type;
 
+
     $("#edit-transaction-date").value =
         item.date;
+
 
     $("#edit-transaction-category").value =
         item.category;
@@ -936,19 +1286,23 @@ function updateTransaction(event) {
             .value
             .trim();
 
+
     const amount =
         Number(
             $("#edit-transaction-amount")
                 .value
         );
 
+
     const type =
         $("#edit-transaction-type")
             .value;
 
+
     const date =
         $("#edit-transaction-date")
             .value;
+
 
     const category =
         $("#edit-transaction-category")
@@ -957,34 +1311,62 @@ function updateTransaction(event) {
 
 
     if (!title) {
-        alert("Judul transaksi wajib diisi.");
+
+        alert(
+            "Judul transaksi wajib diisi."
+        );
+
         return;
     }
 
 
-    if (!Number.isFinite(amount) || amount <= 0) {
-        alert("Jumlah transaksi harus lebih dari 0.");
+    if (
+        !Number.isFinite(amount)
+        || amount <= 0
+    ) {
+
+        alert(
+            "Jumlah transaksi harus lebih dari 0."
+        );
+
         return;
     }
 
 
     if (!date) {
-        alert("Tanggal transaksi wajib diisi.");
+
+        alert(
+            "Tanggal transaksi wajib diisi."
+        );
+
         return;
     }
 
 
     if (!category) {
-        alert("Kategori transaksi wajib diisi.");
+
+        alert(
+            "Kategori transaksi wajib diisi."
+        );
+
         return;
     }
 
 
-    item.title = title;
-    item.amount = amount;
-    item.type = type;
-    item.date = date;
-    item.category = category;
+    item.title =
+        title;
+
+    item.amount =
+        amount;
+
+    item.type =
+        type;
+
+    item.date =
+        date;
+
+    item.category =
+        category;
 
 
     saveData(
@@ -997,7 +1379,9 @@ function updateTransaction(event) {
         "transaction-modal"
     );
 
+
     renderTransactions();
+
     updateTransactionSummary();
 }
 
@@ -1013,9 +1397,13 @@ function isValidURL(url) {
         const parsed =
             new URL(url);
 
+
         return (
-            parsed.protocol === "http:"
-            || parsed.protocol === "https:"
+            parsed.protocol ===
+                "http:"
+            ||
+            parsed.protocol ===
+                "https:"
         );
 
     } catch {
@@ -1033,9 +1421,12 @@ function validateBookmark(data) {
     const titleInvalid =
         !data.title.trim();
 
+
     const urlInvalid =
         !data.url.trim()
-        || !isValidURL(data.url);
+        ||
+        !isValidURL(data.url);
+
 
     const categoryInvalid =
         !data.category.trim();
@@ -1054,8 +1445,10 @@ function validateBookmark(data) {
         "#bookmark-url-error",
         urlInvalid,
         data.url.trim()
-            ? "URL harus menggunakan http:// atau https://."
-            : "URL wajib diisi."
+            ?
+            "URL harus menggunakan http:// atau https://."
+            :
+            "URL wajib diisi."
     );
 
 
@@ -1069,9 +1462,12 @@ function validateBookmark(data) {
 
     if (
         titleInvalid
-        || urlInvalid
-        || categoryInvalid
+        ||
+        urlInvalid
+        ||
+        categoryInvalid
     ) {
+
         valid = false;
     }
 
@@ -1108,16 +1504,24 @@ function addBookmark(event) {
     };
 
 
-    if (!validateBookmark(data)) {
+    if (
+        !validateBookmark(data)
+    ) {
+
         return;
     }
 
 
     bookmarks.push({
-        id: createId(),
+
+        id:
+            createId(),
+
         ...data,
+
         createdAt:
-            new Date().toISOString()
+            new Date()
+                .toISOString()
     });
 
 
@@ -1128,6 +1532,7 @@ function addBookmark(event) {
 
 
     event.target.reset();
+
 
     renderBookmarks();
 
@@ -1151,60 +1556,87 @@ function getFilteredBookmarks() {
             .toLowerCase()
             .trim();
 
+
     const sort =
         $("#bookmark-sort")
             .value;
 
 
     let result =
-        bookmarks.filter(bookmark => {
+        bookmarks.filter(
+            bookmark => {
 
-            if (!search) {
-                return true;
+                if (!search) {
+                    return true;
+                }
+
+
+                return (
+                    bookmark.title
+                        .toLowerCase()
+                        .includes(search)
+                    ||
+                    bookmark.url
+                        .toLowerCase()
+                        .includes(search)
+                    ||
+                    bookmark.category
+                        .toLowerCase()
+                        .includes(search)
+                );
+            }
+        );
+
+
+    result.sort(
+        (a, b) => {
+
+            switch (sort) {
+
+                case "oldest":
+
+                    return (
+                        new Date(
+                            a.createdAt
+                        )
+                        -
+                        new Date(
+                            b.createdAt
+                        )
+                    );
+
+
+                case "title":
+
+                    return a.title.localeCompare(
+                        b.title
+                    );
+
+
+                case "category":
+
+                    return a.category.localeCompare(
+                        b.category
+                    );
+
+
+                case "newest":
+
+                default:
+
+                    return (
+                        new Date(
+                            b.createdAt
+                        )
+                        -
+                        new Date(
+                            a.createdAt
+                        )
+                    );
             }
 
-            return (
-                bookmark.title
-                    .toLowerCase()
-                    .includes(search)
-                || bookmark.url
-                    .toLowerCase()
-                    .includes(search)
-                || bookmark.category
-                    .toLowerCase()
-                    .includes(search)
-            );
-        });
-
-
-    result.sort((a, b) => {
-
-        switch (sort) {
-
-            case "oldest":
-                return (
-                    new Date(a.createdAt)
-                    - new Date(b.createdAt)
-                );
-
-            case "title":
-                return a.title.localeCompare(
-                    b.title
-                );
-
-            case "category":
-                return a.category.localeCompare(
-                    b.category
-                );
-
-            case "newest":
-            default:
-                return (
-                    new Date(b.createdAt)
-                    - new Date(a.createdAt)
-                );
         }
-    });
+    );
 
 
     return result;
@@ -1220,6 +1652,12 @@ function renderBookmarks() {
     const container =
         $("#bookmark-list");
 
+
+    if (!container) {
+        return;
+    }
+
+
     const data =
         getFilteredBookmarks();
 
@@ -1227,7 +1665,10 @@ function renderBookmarks() {
     if (!data.length) {
 
         container.innerHTML = `
-            <div class="empty-state">
+            <div
+                class="empty-state"
+                role="status"
+            >
                 Tidak ada bookmark yang ditemukan.
             </div>
         `;
@@ -1237,75 +1678,101 @@ function renderBookmarks() {
 
 
     container.innerHTML =
-        data.map(bookmark => {
+        data
+            .map(
+                bookmark => {
 
-            return `
-                <article
-                    class="list-item"
-                    data-id="${escapeHTML(bookmark.id)}"
-                >
-
-                    <div class="item-info">
-
-                        <h3>
-                            ${escapeHTML(
-                                bookmark.title
-                            )}
-                        </h3>
-
-                        <p>
-                            Kategori:
-                            ${escapeHTML(
-                                bookmark.category
-                            )}
-                        </p>
-
-                        <p class="bookmark-url">
-                            ${escapeHTML(
-                                bookmark.url
-                            )}
-                        </p>
-
-                    </div>
-
-                    <div class="item-actions">
-
-                        <button
-                            type="button"
-                            class="btn btn-success btn-small"
-                            data-action="open-bookmark"
-                            data-id="${escapeHTML(bookmark.id)}"
-                            aria-label="Buka ${escapeHTML(bookmark.title)}"
+                    return `
+                        <article
+                            class="list-item"
+                            data-id="${escapeHTML(
+                                bookmark.id
+                            )}"
                         >
-                            Buka
-                        </button>
 
-                        <button
-                            type="button"
-                            class="btn btn-primary btn-small"
-                            data-action="edit-bookmark"
-                            data-id="${escapeHTML(bookmark.id)}"
-                            aria-label="Edit ${escapeHTML(bookmark.title)}"
-                        >
-                            Edit
-                        </button>
+                            <div class="item-info">
 
-                        <button
-                            type="button"
-                            class="btn btn-danger btn-small"
-                            data-action="delete-bookmark"
-                            data-id="${escapeHTML(bookmark.id)}"
-                            aria-label="Hapus ${escapeHTML(bookmark.title)}"
-                        >
-                            Hapus
-                        </button>
+                                <h3>
+                                    ${escapeHTML(
+                                        bookmark.title
+                                    )}
+                                </h3>
 
-                    </div>
 
-                </article>
-            `;
+                                <p>
+                                    Kategori:
+                                    ${escapeHTML(
+                                        bookmark.category
+                                    )}
+                                </p>
 
-        }).join("");
+
+                                <p
+                                    class="bookmark-url"
+                                >
+                                    ${escapeHTML(
+                                        bookmark.url
+                                    )}
+                                </p>
+
+                            </div>
+
+
+                            <div
+                                class="item-actions"
+                            >
+
+                                <button
+                                    type="button"
+                                    class="btn btn-success btn-small"
+                                    data-action="open-bookmark"
+                                    data-id="${escapeHTML(
+                                        bookmark.id
+                                    )}"
+                                    aria-label="Buka ${escapeHTML(
+                                        bookmark.title
+                                    )}"
+                                >
+                                    Buka
+                                </button>
+
+
+                                <button
+                                    type="button"
+                                    class="btn btn-primary btn-small"
+                                    data-action="edit-bookmark"
+                                    data-id="${escapeHTML(
+                                        bookmark.id
+                                    )}"
+                                    aria-label="Edit ${escapeHTML(
+                                        bookmark.title
+                                    )}"
+                                >
+                                    Edit
+                                </button>
+
+
+                                <button
+                                    type="button"
+                                    class="btn btn-danger btn-small"
+                                    data-action="delete-bookmark"
+                                    data-id="${escapeHTML(
+                                        bookmark.id
+                                    )}"
+                                    aria-label="Hapus ${escapeHTML(
+                                        bookmark.title
+                                    )}"
+                                >
+                                    Hapus
+                                </button>
+
+                            </div>
+
+                        </article>
+                    `;
+                }
+            )
+            .join("");
 }
 
 
@@ -1317,7 +1784,8 @@ function openBookmark(id) {
 
     const bookmark =
         bookmarks.find(
-            item => item.id === id
+            item =>
+                item.id === id
         );
 
 
@@ -1342,7 +1810,8 @@ function deleteBookmark(id) {
 
     const bookmark =
         bookmarks.find(
-            item => item.id === id
+            item =>
+                item.id === id
         );
 
 
@@ -1356,13 +1825,15 @@ function deleteBookmark(id) {
             `Hapus bookmark "${bookmark.title}"?`
         )
     ) {
+
         return;
     }
 
 
     bookmarks =
         bookmarks.filter(
-            item => item.id !== id
+            item =>
+                item.id !== id
         );
 
 
@@ -1384,7 +1855,8 @@ function openBookmarkEdit(id) {
 
     const bookmark =
         bookmarks.find(
-            item => item.id === id
+            item =>
+                item.id === id
         );
 
 
@@ -1396,11 +1868,14 @@ function openBookmarkEdit(id) {
     $("#edit-bookmark-id").value =
         bookmark.id;
 
+
     $("#edit-bookmark-title").value =
         bookmark.title;
 
+
     $("#edit-bookmark-url").value =
         bookmark.url;
+
 
     $("#edit-bookmark-category").value =
         bookmark.category;
@@ -1424,7 +1899,8 @@ function updateBookmark(event) {
 
     const bookmark =
         bookmarks.find(
-            item => item.id === id
+            item =>
+                item.id === id
         );
 
 
@@ -1438,10 +1914,12 @@ function updateBookmark(event) {
             .value
             .trim();
 
+
     const url =
         $("#edit-bookmark-url")
             .value
             .trim();
+
 
     const category =
         $("#edit-bookmark-category")
@@ -1450,32 +1928,43 @@ function updateBookmark(event) {
 
 
     if (!title) {
+
         alert(
             "Nama bookmark wajib diisi."
         );
+
         return;
     }
 
 
     if (!isValidURL(url)) {
+
         alert(
             "URL tidak valid. Gunakan http:// atau https://."
         );
+
         return;
     }
 
 
     if (!category) {
+
         alert(
             "Kategori wajib diisi."
         );
+
         return;
     }
 
 
-    bookmark.title = title;
-    bookmark.url = url;
-    bookmark.category = category;
+    bookmark.title =
+        title;
+
+    bookmark.url =
+        url;
+
+    bookmark.category =
+        category;
 
 
     saveData(
@@ -1487,6 +1976,7 @@ function updateBookmark(event) {
     closeModal(
         "bookmark-modal"
     );
+
 
     renderBookmarks();
 }
@@ -1504,23 +1994,32 @@ function showFormMessage(
     const element =
         $(selector);
 
+
     if (!element) {
         return;
     }
 
 
     element.innerHTML = `
-        <p class="success-message">
+        <p
+            class="success-message"
+            role="status"
+            aria-live="polite"
+        >
             ${escapeHTML(message)}
         </p>
     `;
 
 
-    window.setTimeout(() => {
+    window.setTimeout(
+        () => {
 
-        element.textContent = "";
+            element.textContent =
+                "";
 
-    }, 2500);
+        },
+        2500
+    );
 }
 
 
@@ -1529,6 +2028,7 @@ function showFormMessage(
 ======================================================= */
 
 let activeModal = null;
+
 let previousFocusedElement = null;
 
 
@@ -1536,6 +2036,7 @@ function openModal(id) {
 
     const modal =
         document.getElementById(id);
+
 
     if (!modal) {
         return;
@@ -1545,10 +2046,15 @@ function openModal(id) {
     previousFocusedElement =
         document.activeElement;
 
-    activeModal = modal;
+
+    activeModal =
+        modal;
 
 
-    modal.classList.add("show");
+    modal.classList.add(
+        "show"
+    );
+
 
     modal.setAttribute(
         "aria-hidden",
@@ -1556,13 +2062,18 @@ function openModal(id) {
     );
 
 
+    /*
+    Fokus ke input pertama
+    */
+
     const firstInput =
         modal.querySelector(
-            "input:not([type='hidden']), select, button"
+            "input:not([type='hidden']), select, textarea, button"
         );
 
 
     if (firstInput) {
+
         firstInput.focus();
     }
 }
@@ -1573,12 +2084,16 @@ function closeModal(id) {
     const modal =
         document.getElementById(id);
 
+
     if (!modal) {
         return;
     }
 
 
-    modal.classList.remove("show");
+    modal.classList.remove(
+        "show"
+    );
+
 
     modal.setAttribute(
         "aria-hidden",
@@ -1588,71 +2103,103 @@ function closeModal(id) {
 
     if (
         activeModal === modal
-        && previousFocusedElement
+        &&
+        previousFocusedElement
+        &&
+        typeof
+            previousFocusedElement.focus
+            ===
+            "function"
     ) {
 
         previousFocusedElement.focus();
     }
 
 
-    activeModal = null;
+    activeModal =
+        null;
+
+    previousFocusedElement =
+        null;
 }
 
 
 function initializeModals() {
 
+    /*
+    Tombol close
+    */
+
     $$("[data-close-modal]")
-        .forEach(button => {
+        .forEach(
+            button => {
 
-            button.addEventListener(
-                "click",
-                () => {
-
-                    closeModal(
-                        button.dataset.closeModal
-                    );
-
-                }
-            );
-
-        });
-
-
-    $$(".modal")
-        .forEach(modal => {
-
-            modal.addEventListener(
-                "click",
-                event => {
-
-                    if (
-                        event.target === modal
-                    ) {
+                button.addEventListener(
+                    "click",
+                    () => {
 
                         closeModal(
-                            modal.id
+                            button
+                                .dataset
+                                .closeModal
                         );
 
                     }
-                }
-            );
+                );
 
-        });
+            }
+        );
 
+
+    /*
+    Klik background modal
+    */
+
+    $$(".modal")
+        .forEach(
+            modal => {
+
+                modal.addEventListener(
+                    "click",
+                    event => {
+
+                        if (
+                            event.target ===
+                            modal
+                        ) {
+
+                            closeModal(
+                                modal.id
+                            );
+                        }
+
+                    }
+                );
+
+            }
+        );
+
+
+    /*
+    Tombol Escape
+    */
 
     document.addEventListener(
         "keydown",
         event => {
 
             if (
-                event.key === "Escape"
-                && activeModal
+                event.key ===
+                    "Escape"
+                &&
+                activeModal
             ) {
 
                 closeModal(
                     activeModal.id
                 );
             }
+
         }
     );
 }
@@ -1665,11 +2212,21 @@ function initializeModals() {
 function startQuiz() {
 
     quizState = {
-        currentQuestionIndex: 0,
-        score: 0,
-        selectedAnswer: null,
-        answered: false,
-        quizFinished: false
+
+        currentQuestionIndex:
+            0,
+
+        score:
+            0,
+
+        selectedAnswer:
+            null,
+
+        answered:
+            false,
+
+        quizFinished:
+            false
     };
 
 
@@ -1677,9 +2234,11 @@ function startQuiz() {
         .classList
         .add("hidden");
 
+
     $("#quiz-result")
         .classList
         .add("hidden");
+
 
     $("#quiz-question")
         .classList
@@ -1690,16 +2249,23 @@ function startQuiz() {
 }
 
 
+/* =======================================================
+   24. QUIZ RENDER
+======================================================= */
+
 function renderQuestion() {
 
     const question =
         quizQuestions[
-            quizState.currentQuestionIndex
+            quizState
+                .currentQuestionIndex
         ];
 
 
     if (!question) {
+
         finishQuiz();
+
         return;
     }
 
@@ -1707,13 +2273,16 @@ function renderQuestion() {
     quizState.selectedAnswer =
         null;
 
+
     quizState.answered =
         false;
 
 
     $("#current-question-number")
         .textContent =
-        quizState.currentQuestionIndex + 1;
+        quizState
+            .currentQuestionIndex
+        + 1;
 
 
     $("#total-question-number")
@@ -1728,24 +2297,32 @@ function renderQuestion() {
 
     $("#quiz-options").innerHTML =
         question.options
-            .map((option, index) => `
-                <button
-                    type="button"
-                    class="quiz-option"
-                    data-option-index="${index}"
-                    aria-pressed="false"
-                >
-                    ${escapeHTML(option)}
-                </button>
-            `)
+            .map(
+                (option, index) => `
+
+                    <button
+                        type="button"
+                        class="quiz-option"
+                        data-option-index="${index}"
+                        aria-pressed="false"
+                    >
+                        ${escapeHTML(
+                            option
+                        )}
+                    </button>
+
+                `
+            )
             .join("");
 
 
     const feedback =
         $("#quiz-feedback");
 
+
     feedback.className =
         "quiz-feedback";
+
 
     feedback.textContent =
         "";
@@ -1755,6 +2332,7 @@ function renderQuestion() {
         .classList
         .remove("hidden");
 
+
     $("#next-question")
         .classList
         .add("hidden");
@@ -1762,12 +2340,15 @@ function renderQuestion() {
 
 
 /* =======================================================
-   24. QUIZ SELECT
+   25. QUIZ SELECT
 ======================================================= */
 
 function selectQuizAnswer(index) {
 
-    if (quizState.answered) {
+    if (
+        quizState.answered
+    ) {
+
         return;
     }
 
@@ -1777,52 +2358,63 @@ function selectQuizAnswer(index) {
 
 
     $$(".quiz-option")
-        .forEach(option => {
+        .forEach(
+            option => {
 
-            const selected =
-                Number(
-                    option.dataset.optionIndex
-                ) === index;
-
-
-            option.classList.toggle(
-                "selected",
-                selected
-            );
+                const selected =
+                    Number(
+                        option
+                            .dataset
+                            .optionIndex
+                    ) === index;
 
 
-            option.setAttribute(
-                "aria-pressed",
-                String(selected)
-            );
+                option.classList.toggle(
+                    "selected",
+                    selected
+                );
 
-        });
+
+                option.setAttribute(
+                    "aria-pressed",
+                    String(selected)
+                );
+
+            }
+        );
 }
 
 
 /* =======================================================
-   25. QUIZ SUBMIT
+   26. QUIZ SUBMIT
 ======================================================= */
 
 function submitAnswer() {
 
-    if (quizState.answered) {
+    if (
+        quizState.answered
+    ) {
+
         return;
     }
 
 
     if (
-        quizState.selectedAnswer === null
+        quizState.selectedAnswer ===
+        null
     ) {
 
         const feedback =
             $("#quiz-feedback");
 
+
         feedback.textContent =
             "Silakan pilih salah satu jawaban terlebih dahulu.";
 
+
         feedback.className =
             "quiz-feedback show incorrect";
+
 
         return;
     }
@@ -1830,7 +2422,8 @@ function submitAnswer() {
 
     const question =
         quizQuestions[
-            quizState.currentQuestionIndex
+            quizState
+                .currentQuestionIndex
         ];
 
 
@@ -1851,8 +2444,10 @@ function submitAnswer() {
 
         quizState.score++;
 
+
         feedback.textContent =
             "Jawaban benar!";
+
 
         feedback.className =
             "quiz-feedback show correct";
@@ -1862,22 +2457,27 @@ function submitAnswer() {
         feedback.textContent =
             `Jawaban kurang tepat. Jawaban yang benar adalah: ${question.options[question.answer]}.`;
 
+
         feedback.className =
             "quiz-feedback show incorrect";
     }
 
 
     $$(".quiz-option")
-        .forEach(option => {
+        .forEach(
+            option => {
 
-            option.disabled = true;
+                option.disabled =
+                    true;
 
-        });
+            }
+        );
 
 
     $("#submit-answer")
         .classList
         .add("hidden");
+
 
     $("#next-question")
         .classList
@@ -1886,12 +2486,15 @@ function submitAnswer() {
 
 
 /* =======================================================
-   26. QUIZ NEXT
+   27. QUIZ NEXT
 ======================================================= */
 
 function nextQuestion() {
 
-    if (!quizState.answered) {
+    if (
+        !quizState.answered
+    ) {
+
         return;
     }
 
@@ -1900,8 +2503,10 @@ function nextQuestion() {
 
 
     if (
-        quizState.currentQuestionIndex
-        >= quizQuestions.length
+        quizState
+            .currentQuestionIndex
+        >=
+        quizQuestions.length
     ) {
 
         finishQuiz();
@@ -1915,7 +2520,7 @@ function nextQuestion() {
 
 
 /* =======================================================
-   27. QUIZ FINISH
+   28. QUIZ FINISH
 ======================================================= */
 
 function finishQuiz() {
@@ -1928,6 +2533,7 @@ function finishQuiz() {
         .classList
         .add("hidden");
 
+
     $("#quiz-result")
         .classList
         .remove("hidden");
@@ -1936,13 +2542,17 @@ function finishQuiz() {
     const total =
         quizQuestions.length;
 
+
     const score =
         quizState.score;
 
 
     const percentage =
         Math.round(
-            (score / total) * 100
+            (
+                score /
+                total
+            ) * 100
         );
 
 
@@ -1950,15 +2560,19 @@ function finishQuiz() {
         .textContent =
         `${score}/${total}`;
 
+
     $("#quiz-percentage")
         .textContent =
         `${percentage}%`;
 
 
-    if (score > highScore) {
+    if (
+        score > highScore
+    ) {
 
         highScore =
             score;
+
 
         localStorage.setItem(
             STORAGE_KEYS.highScore,
@@ -1971,6 +2585,7 @@ function finishQuiz() {
         .textContent =
         highScore;
 
+
     $("#high-score-start")
         .textContent =
         highScore;
@@ -1978,18 +2593,28 @@ function finishQuiz() {
 
 
 function restartQuiz() {
+
     startQuiz();
 }
 
 
 /* =======================================================
-   28. EVENT DELEGATION
+   29. EVENT DELEGATION
 ======================================================= */
 
 function initializeListEvents() {
 
-    $("#transaction-list")
-        .addEventListener(
+    const transactionList =
+        $("#transaction-list");
+
+
+    const bookmarkList =
+        $("#bookmark-list");
+
+
+    if (transactionList) {
+
+        transactionList.addEventListener(
             "click",
             event => {
 
@@ -2007,7 +2632,8 @@ function initializeListEvents() {
                 const {
                     action,
                     id
-                } = button.dataset;
+                } =
+                    button.dataset;
 
 
                 if (
@@ -2015,22 +2641,28 @@ function initializeListEvents() {
                     "edit-transaction"
                 ) {
 
-                    openTransactionEdit(id);
+                    openTransactionEdit(
+                        id
+                    );
 
                 } else if (
                     action ===
                     "delete-transaction"
                 ) {
 
-                    deleteTransaction(id);
+                    deleteTransaction(
+                        id
+                    );
                 }
 
             }
         );
+    }
 
 
-    $("#bookmark-list")
-        .addEventListener(
+    if (bookmarkList) {
+
+        bookmarkList.addEventListener(
             "click",
             event => {
 
@@ -2048,7 +2680,8 @@ function initializeListEvents() {
                 const {
                     action,
                     id
-                } = button.dataset;
+                } =
+                    button.dataset;
 
 
                 if (
@@ -2056,64 +2689,100 @@ function initializeListEvents() {
                     "open-bookmark"
                 ) {
 
-                    openBookmark(id);
+                    openBookmark(
+                        id
+                    );
 
                 } else if (
                     action ===
                     "edit-bookmark"
                 ) {
 
-                    openBookmarkEdit(id);
+                    openBookmarkEdit(
+                        id
+                    );
 
                 } else if (
                     action ===
                     "delete-bookmark"
                 ) {
 
-                    deleteBookmark(id);
+                    deleteBookmark(
+                        id
+                    );
                 }
 
             }
         );
+    }
 }
 
 
 /* =======================================================
-   29. QUIZ EVENT DELEGATION
+   30. QUIZ EVENT DELEGATION
 ======================================================= */
 
 function initializeQuizEvents() {
 
-    $("#start-quiz")
-        .addEventListener(
+    const startQuizButton =
+        $("#start-quiz");
+
+
+    const submitAnswerButton =
+        $("#submit-answer");
+
+
+    const nextQuestionButton =
+        $("#next-question");
+
+
+    const restartQuizButton =
+        $("#restart-quiz");
+
+
+    const quizOptions =
+        $("#quiz-options");
+
+
+    if (startQuizButton) {
+
+        startQuizButton.addEventListener(
             "click",
             startQuiz
         );
+    }
 
 
-    $("#submit-answer")
-        .addEventListener(
+    if (submitAnswerButton) {
+
+        submitAnswerButton.addEventListener(
             "click",
             submitAnswer
         );
+    }
 
 
-    $("#next-question")
-        .addEventListener(
+    if (nextQuestionButton) {
+
+        nextQuestionButton.addEventListener(
             "click",
             nextQuestion
         );
+    }
 
 
-    $("#restart-quiz")
-        .addEventListener(
+    if (restartQuizButton) {
+
+        restartQuizButton.addEventListener(
             "click",
             restartQuiz
         );
+    }
 
 
-    $("#quiz-options")
-        .addEventListener(
+    if (quizOptions) {
+
+        quizOptions.addEventListener(
             "click",
             event => {
 
@@ -2130,100 +2799,166 @@ function initializeQuizEvents() {
 
                 selectQuizAnswer(
                     Number(
-                        option.dataset.optionIndex
+                        option
+                            .dataset
+                            .optionIndex
                     )
                 );
 
             }
         );
+    }
 }
 
 
 /* =======================================================
-   30. FORM EVENTS
+   31. FORM EVENTS
 ======================================================= */
 
 function initializeForms() {
 
-    $("#transaction-form")
-        .addEventListener(
+    const transactionForm =
+        $("#transaction-form");
+
+
+    const bookmarkForm =
+        $("#bookmark-form");
+
+
+    const transactionEditForm =
+        $("#transaction-edit-form");
+
+
+    const bookmarkEditForm =
+        $("#bookmark-edit-form");
+
+
+    if (transactionForm) {
+
+        transactionForm.addEventListener(
             "submit",
             addTransaction
         );
+    }
 
 
-    $("#bookmark-form")
-        .addEventListener(
+    if (bookmarkForm) {
+
+        bookmarkForm.addEventListener(
             "submit",
             addBookmark
         );
+    }
 
 
-    $("#transaction-edit-form")
-        .addEventListener(
+    if (transactionEditForm) {
+
+        transactionEditForm.addEventListener(
             "submit",
             updateTransaction
         );
+    }
 
 
-    $("#bookmark-edit-form")
-        .addEventListener(
+    if (bookmarkEditForm) {
+
+        bookmarkEditForm.addEventListener(
             "submit",
             updateBookmark
         );
+    }
 }
 
 
 /* =======================================================
-   31. FILTER EVENTS
+   32. FILTER EVENTS
 ======================================================= */
 
 function initializeFilterEvents() {
 
-    $("#transaction-search")
-        .addEventListener(
+    const transactionSearch =
+        $("#transaction-search");
+
+
+    const transactionFilter =
+        $("#transaction-filter");
+
+
+    const transactionSort =
+        $("#transaction-sort");
+
+
+    const bookmarkSearch =
+        $("#bookmark-search");
+
+
+    const bookmarkSort =
+        $("#bookmark-sort");
+
+
+    if (transactionSearch) {
+
+        transactionSearch.addEventListener(
             "input",
             renderTransactions
         );
+    }
 
 
-    $("#transaction-filter")
-        .addEventListener(
+    if (transactionFilter) {
+
+        transactionFilter.addEventListener(
             "change",
             renderTransactions
         );
+    }
 
 
-    $("#transaction-sort")
-        .addEventListener(
+    if (transactionSort) {
+
+        transactionSort.addEventListener(
             "change",
             renderTransactions
         );
+    }
 
 
-    $("#bookmark-search")
-        .addEventListener(
+    if (bookmarkSearch) {
+
+        bookmarkSearch.addEventListener(
             "input",
             renderBookmarks
         );
+    }
 
 
-    $("#bookmark-sort")
-        .addEventListener(
+    if (bookmarkSort) {
+
+        bookmarkSort.addEventListener(
             "change",
             renderBookmarks
         );
+    }
 }
 
 
 /* =======================================================
-   32. RESET EVENTS
+   33. RESET EVENTS
 ======================================================= */
 
 function initializeResetEvents() {
 
-    $("#transaction-reset")
-        .addEventListener(
+    const transactionReset =
+        $("#transaction-reset");
+
+
+    const bookmarkReset =
+        $("#bookmark-reset");
+
+
+    if (transactionReset) {
+
+        transactionReset.addEventListener(
             "click",
             () => {
 
@@ -2234,34 +2969,49 @@ function initializeResetEvents() {
                     "#transaction-category-error"
                 ]);
 
+
                 [
                     "#transaction-title",
                     "#transaction-amount",
                     "#transaction-date",
                     "#transaction-category"
-                ].forEach(selector => {
+                ].forEach(
+                    selector => {
 
-                    const element =
-                        $(selector);
+                        const element =
+                            $(selector);
 
-                    if (element) {
-                        element.setAttribute(
-                            "aria-invalid",
-                            "false"
-                        );
+
+                        if (element) {
+
+                            element.setAttribute(
+                                "aria-invalid",
+                                "false"
+                            );
+                        }
+
                     }
-                });
+                );
 
 
-                $("#transaction-form-message")
-                    .textContent = "";
+                const message =
+                    $("#transaction-form-message");
+
+
+                if (message) {
+
+                    message.textContent =
+                        "";
+                }
 
             }
         );
+    }
 
 
-    $("#bookmark-reset")
-        .addEventListener(
+    if (bookmarkReset) {
+
+        bookmarkReset.addEventListener(
             "click",
             () => {
 
@@ -2271,37 +3021,57 @@ function initializeResetEvents() {
                     "#bookmark-category-error"
                 ]);
 
+
                 [
                     "#bookmark-title",
                     "#bookmark-url",
                     "#bookmark-category"
-                ].forEach(selector => {
+                ].forEach(
+                    selector => {
 
-                    const element =
-                        $(selector);
+                        const element =
+                            $(selector);
 
-                    if (element) {
-                        element.setAttribute(
-                            "aria-invalid",
-                            "false"
-                        );
+
+                        if (element) {
+
+                            element.setAttribute(
+                                "aria-invalid",
+                                "false"
+                            );
+                        }
+
                     }
-                });
+                );
 
 
-                $("#bookmark-form-message")
-                    .textContent = "";
+                const message =
+                    $("#bookmark-form-message");
+
+
+                if (message) {
+
+                    message.textContent =
+                        "";
+                }
 
             }
         );
+    }
 }
 
 
 /* =======================================================
-   33. INITIALIZATION
+   34. INITIALIZATION
 ======================================================= */
 
 function initializeApplication() {
+
+    /*
+    -------------------------------------------------------
+    INITIALIZE COMPONENTS
+    -------------------------------------------------------
+    */
 
     initializeTabs();
 
@@ -2318,6 +3088,12 @@ function initializeApplication() {
     initializeQuizEvents();
 
 
+    /*
+    -------------------------------------------------------
+    INITIAL RENDER
+    -------------------------------------------------------
+    */
+
     renderTransactions();
 
     updateTransactionSummary();
@@ -2325,26 +3101,49 @@ function initializeApplication() {
     renderBookmarks();
 
 
-    $("#high-score-start")
-        .textContent =
-        highScore;
+    /*
+    -------------------------------------------------------
+    HIGH SCORE
+    -------------------------------------------------------
+    */
 
-    $("#high-score-result")
-        .textContent =
-        highScore;
+    const highScoreStart =
+        $("#high-score-start");
+
+
+    const highScoreResult =
+        $("#high-score-result");
+
+
+    if (highScoreStart) {
+
+        highScoreStart.textContent =
+            highScore;
+    }
+
+
+    if (highScoreResult) {
+
+        highScoreResult.textContent =
+            highScore;
+    }
 
 
     /*
-       Karena panel memakai hidden,
-       pastikan kondisi awal sesuai route.
+    -------------------------------------------------------
+    FINAL ACTIVE TAB
+    -------------------------------------------------------
     */
 
     const activeTab =
         getTabFromHash()
-        || localStorage.getItem(
+        ||
+        localStorage.getItem(
             STORAGE_KEYS.activeTab
         )
-        || "expense";
+        ||
+        "expense";
+
 
     activateTab(
         activeTab,
@@ -2355,7 +3154,7 @@ function initializeApplication() {
 
 
 /* =======================================================
-   34. START APPLICATION
+   35. START APPLICATION
 ======================================================= */
 
 document.addEventListener(
