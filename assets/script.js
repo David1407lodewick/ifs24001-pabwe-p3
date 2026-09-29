@@ -1,9 +1,16 @@
 "use strict";
 
+/*
+=========================================================
+CAMPUSHUB JS
+PABWE P3
+VANILLA JAVASCRIPT
+=========================================================
+*/
 
-/* =========================================================
+/* =======================================================
    1. STORAGE
-========================================================= */
+======================================================= */
 
 const STORAGE_KEYS = {
     transactions: "campushub_transactions",
@@ -13,65 +20,75 @@ const STORAGE_KEYS = {
 };
 
 
-/* =========================================================
-   2. DATA
-========================================================= */
+/* =======================================================
+   2. STATE
+======================================================= */
 
-let transactions = [];
-let bookmarks = [];
-let highScore = 0;
+let transactions = loadData(
+    STORAGE_KEYS.transactions,
+    []
+);
+
+let bookmarks = loadData(
+    STORAGE_KEYS.bookmarks,
+    []
+);
+
+let highScore = Number(
+    localStorage.getItem(
+        STORAGE_KEYS.highScore
+    ) || 0
+);
 
 let quizState = {
-    currentQuestion: 0,
+    currentQuestionIndex: 0,
     score: 0,
     selectedAnswer: null,
-    finished: false
+    answered: false,
+    quizFinished: false
 };
 
 
-/* =========================================================
-   3. QUIZ QUESTIONS
-========================================================= */
+/* =======================================================
+   3. QUIZ DATA
+======================================================= */
 
 const quizQuestions = [
-
     {
         question:
-            "Apa fungsi utama dari JavaScript pada halaman web?",
+            "Apa yang digunakan untuk memilih satu elemen HTML berdasarkan ID?",
 
         options: [
-            "Mengatur database server",
-            "Membuat halaman menjadi interaktif",
-            "Mengatur kabel jaringan",
-            "Mengganti sistem operasi"
-        ],
-
-        answer: 1
-    },
-
-
-    {
-        question:
-            "Method DOM yang digunakan untuk mencari elemen berdasarkan ID adalah?",
-
-        options: [
-            "getElementById()",
-            "getClass()",
-            "findId()",
-            "selectId()"
+            "document.getElementById()",
+            "document.getElements()",
+            "document.selectId()",
+            "document.findId()"
         ],
 
         answer: 0
     },
 
+    {
+        question:
+            "Method apa yang digunakan untuk menambahkan event pada elemen?",
+
+        options: [
+            "addEventListener()",
+            "addEvent()",
+            "createEventListener()",
+            "eventAdd()"
+        ],
+
+        answer: 0
+    },
 
     {
         question:
-            "Manakah yang digunakan untuk menyimpan data pada browser?",
+            "Data yang disimpan pada localStorage memiliki bentuk penyimpanan utama berupa?",
 
         options: [
-            "LocalStorage",
-            "Console",
+            "String",
+            "Function",
             "HTML",
             "CSS"
         ],
@@ -79,61 +96,52 @@ const quizQuestions = [
         answer: 0
     },
 
-
     {
         question:
-            "Keyword yang digunakan untuk membuat variabel yang nilainya dapat diubah adalah?",
+            "Method array apa yang digunakan untuk menghapus atau menambahkan elemen berdasarkan index?",
 
         options: [
-            "const",
-            "let",
-            "fixed",
-            "static"
+            "splice()",
+            "pushOnly()",
+            "change()",
+            "modifyArray()"
         ],
 
-        answer: 1
+        answer: 0
     },
 
-
     {
         question:
-            "Event yang digunakan ketika sebuah tombol diklik adalah?",
+            "CRUD merupakan singkatan dari?",
 
         options: [
-            "hover",
-            "submit",
-            "click",
-            "load"
+            "Create, Read, Update, Delete",
+            "Create, Run, Update, Data",
+            "Code, Read, Use, Delete",
+            "Create, Remove, Use, Design"
         ],
 
-        answer: 2
+        answer: 0
     }
-
 ];
 
 
-/* =========================================================
+/* =======================================================
    4. DOM HELPER
-========================================================= */
+======================================================= */
 
-function $(selector) {
-    return document.querySelector(selector);
-}
+const $ = (selector) =>
+    document.querySelector(selector);
 
-
-function $$(selector) {
-    return document.querySelectorAll(selector);
-}
+const $$ = (selector) =>
+    document.querySelectorAll(selector);
 
 
-/* =========================================================
+/* =======================================================
    5. UTILITY
-========================================================= */
+======================================================= */
 
 function formatRupiah(value) {
-
-    const number = Number(value) || 0;
-
     return new Intl.NumberFormat(
         "id-ID",
         {
@@ -141,36 +149,34 @@ function formatRupiah(value) {
             currency: "IDR",
             maximumFractionDigits: 0
         }
-    ).format(number);
+    ).format(Number(value) || 0);
 }
 
 
 function createId() {
-
     return (
-        Date.now().toString(36) +
-        Math.random()
+        Date.now().toString(36)
+        + "-"
+        + Math.random()
             .toString(36)
-            .substring(2, 8)
+            .slice(2, 9)
     );
 }
 
 
 function escapeHTML(value) {
+    const div =
+        document.createElement("div");
 
-    return String(value ?? "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
+    div.textContent =
+        String(value ?? "");
+
+    return div.innerHTML;
 }
 
 
-function loadData(key, fallback = []) {
-
+function loadData(key, fallback) {
     try {
-
         const data =
             localStorage.getItem(key);
 
@@ -181,42 +187,31 @@ function loadData(key, fallback = []) {
         const parsed =
             JSON.parse(data);
 
-        return parsed;
+        return parsed ?? fallback;
 
-    } catch (error) {
-
-        console.error(
-            "Gagal membaca LocalStorage:",
-            error
-        );
-
+    } catch {
         return fallback;
     }
 }
 
 
 function saveData(key, data) {
-
     try {
-
         localStorage.setItem(
             key,
             JSON.stringify(data)
         );
 
-    } catch (error) {
+        return true;
 
-        console.error(
-            "Gagal menyimpan LocalStorage:",
-            error
-        );
+    } catch {
+        return false;
     }
 }
 
 
-function showError(id, message) {
-
-    const element = $(`#${id}`);
+function showError(selector, message) {
+    const element = $(selector);
 
     if (element) {
         element.textContent = message;
@@ -224,21 +219,41 @@ function showError(id, message) {
 }
 
 
-function clearErrors(prefix) {
-
-    $$(
-        `[id^="${prefix}"][id$="-error"]`
-    ).forEach(element => {
-
-        element.textContent = "";
-
+function clearErrors(selectors) {
+    selectors.forEach(selector => {
+        showError(selector, "");
     });
 }
 
 
-/* =========================================================
-   6. TAB MANAGEMENT + HASH ROUTING
-========================================================= */
+function setInvalid(
+    inputSelector,
+    errorSelector,
+    invalid,
+    message = ""
+) {
+    const input =
+        $(inputSelector);
+
+    if (!input) {
+        return;
+    }
+
+    input.setAttribute(
+        "aria-invalid",
+        invalid ? "true" : "false"
+    );
+
+    showError(
+        errorSelector,
+        invalid ? message : ""
+    );
+}
+
+
+/* =======================================================
+   6. TAB + HASH ROUTING
+======================================================= */
 
 function getTabFromHash() {
 
@@ -248,23 +263,16 @@ function getTabFromHash() {
             .toLowerCase()
             .trim();
 
-
     const routes = {
-
         pengeluaran: "expense",
-
         expense: "expense",
 
         bookmark: "bookmark",
-
         bookmarks: "bookmark",
 
         kuis: "quiz",
-
         quiz: "quiz"
-
     };
-
 
     return routes[hash] || null;
 }
@@ -273,18 +281,12 @@ function getTabFromHash() {
 function getHashFromTab(tabName) {
 
     const routes = {
-
         expense: "pengeluaran",
-
         bookmark: "bookmark",
-
         quiz: "kuis"
-
     };
 
-
-    return routes[tabName]
-        || "pengeluaran";
+    return routes[tabName] || "";
 }
 
 
@@ -300,118 +302,106 @@ function activateTab(
         "quiz"
     ];
 
-
     if (!validTabs.includes(tabName)) {
         tabName = "expense";
     }
 
+    $$(".tab-button").forEach(button => {
 
-    $$(".tab-button")
-        .forEach(button => {
+        const active =
+            button.dataset.tab === tabName;
 
-            const isActive =
-                button.dataset.tab === tabName;
+        button.classList.toggle(
+            "active",
+            active
+        );
 
-            button.classList.toggle(
-                "active",
-                isActive
-            );
-
-            button.setAttribute(
-                "aria-selected",
-                String(isActive)
-            );
-
-        });
+        button.setAttribute(
+            "aria-selected",
+            String(active)
+        );
+    });
 
 
-    $$(".tab-panel")
-        .forEach(panel => {
+    $$(".tab-panel").forEach(panel => {
 
-            const isActive =
-                panel.id ===
-                `${tabName}-panel`;
+        const active =
+            panel.id ===
+            `${tabName}-panel`;
 
-            panel.classList.toggle(
-                "active",
-                isActive
-            );
+        panel.classList.toggle(
+            "active",
+            active
+        );
 
-            panel.setAttribute(
-                "aria-hidden",
-                String(!isActive)
-            );
-
-        });
+        panel.hidden = !active;
+    });
 
 
     if (save) {
-
         localStorage.setItem(
             STORAGE_KEYS.activeTab,
             tabName
         );
-
     }
 
 
     if (updateUrl) {
 
-        const targetHash =
-            `#${getHashFromTab(tabName)}`;
+        const hash =
+            getHashFromTab(tabName);
 
+        const target =
+            hash
+                ? `#${hash}`
+                : "";
 
         if (
             window.location.hash !==
-            targetHash
+            target
         ) {
 
-            window.location.hash =
-                targetHash;
-
+            history.replaceState(
+                null,
+                "",
+                `${window.location.pathname}${window.location.search}${target}`
+            );
         }
-
     }
-
 }
 
 
 function initializeTabs() {
 
-    $$(".tab-button")
-        .forEach(button => {
+    $$(".tab-button").forEach(button => {
 
-            button.addEventListener(
-                "click",
-                () => {
+        button.addEventListener(
+            "click",
+            () => {
 
-                    activateTab(
-                        button.dataset.tab,
-                        true,
-                        true
-                    );
+                activateTab(
+                    button.dataset.tab
+                );
 
-                }
-            );
+            }
+        );
 
-        });
+    });
 
 
-    const tabFromUrl =
+    const urlTab =
         getTabFromHash();
-
 
     const savedTab =
         localStorage.getItem(
             STORAGE_KEYS.activeTab
-        )
-        || "expense";
+        ) || "expense";
 
 
     activateTab(
-        tabFromUrl || savedTab,
+        urlTab || savedTab,
         true,
-        true
+        Boolean(urlTab)
     );
 
 
@@ -419,87 +409,87 @@ function initializeTabs() {
         "hashchange",
         () => {
 
-            const nextTab =
-                getTabFromHash()
-                || "expense";
-
-
             activateTab(
-                nextTab,
+                getTabFromHash()
+                || "expense",
                 true,
                 false
             );
 
         }
     );
-
 }
 
 
-/* =========================================================
-   7. EXPENSE VALIDATION
-========================================================= */
+/* =======================================================
+   7. TRANSACTION VALIDATION
+======================================================= */
 
-function validateExpense(
-    date,
-    category,
-    amount,
-    description,
-    prefix = "expense"
-) {
+function validateTransaction(data) {
 
     let valid = true;
 
-
-    if (!date) {
-
-        showError(
-            `${prefix}-date-error`,
-            "Tanggal wajib diisi."
-        );
-
-        valid = false;
-
-    }
+    clearErrors([
+        "#transaction-title-error",
+        "#transaction-amount-error",
+        "#transaction-date-error",
+        "#transaction-category-error"
+    ]);
 
 
-    if (!category) {
+    const titleInvalid =
+        !data.title.trim();
 
-        showError(
-            `${prefix}-category-error`,
-            "Kategori wajib dipilih."
-        );
+    const amountInvalid =
+        !Number.isFinite(data.amount)
+        || data.amount <= 0;
 
-        valid = false;
+    const dateInvalid =
+        !data.date;
 
-    }
+    const categoryInvalid =
+        !data.category.trim();
+
+
+    setInvalid(
+        "#transaction-title",
+        "#transaction-title-error",
+        titleInvalid,
+        "Judul wajib diisi."
+    );
+
+
+    setInvalid(
+        "#transaction-amount",
+        "#transaction-amount-error",
+        amountInvalid,
+        "Jumlah harus lebih dari 0."
+    );
+
+
+    setInvalid(
+        "#transaction-date",
+        "#transaction-date-error",
+        dateInvalid,
+        "Tanggal wajib diisi."
+    );
+
+
+    setInvalid(
+        "#transaction-category",
+        "#transaction-category-error",
+        categoryInvalid,
+        "Kategori wajib diisi."
+    );
 
 
     if (
-        amount === ""
-        || Number(amount) <= 0
-        || !Number.isFinite(Number(amount))
+        titleInvalid
+        || amountInvalid
+        || dateInvalid
+        || categoryInvalid
     ) {
-
-        showError(
-            `${prefix}-amount-error`,
-            "Jumlah harus lebih dari 0."
-        );
-
         valid = false;
-
-    }
-
-
-    if (!description.trim()) {
-
-        showError(
-            `${prefix}-description-error`,
-            "Deskripsi wajib diisi."
-        );
-
-        valid = false;
-
     }
 
 
@@ -507,299 +497,52 @@ function validateExpense(
 }
 
 
-/* =========================================================
-   8. EXPENSE SUMMARY
-========================================================= */
-
-function updateExpenseSummary() {
-
-    const total =
-        transactions.reduce(
-            (sum, transaction) =>
-                sum + Number(transaction.amount),
-            0
-        );
-
-
-    const count =
-        transactions.length;
-
-
-    const average =
-        count > 0
-            ? total / count
-            : 0;
-
-
-    $("#total-expense").textContent =
-        formatRupiah(total);
-
-
-    $("#transaction-count").textContent =
-        count;
-
-
-    $("#average-expense").textContent =
-        formatRupiah(average);
-
-}
-
-
-/* =========================================================
-   9. EXPENSE RENDER
-========================================================= */
-
-function renderTransactions() {
-
-    const list =
-        $("#expense-list");
-
-
-    if (!list) {
-        return;
-    }
-
-
-    const category =
-        $("#expense-filter-category")
-            .value;
-
-
-    const search =
-        $("#expense-filter-search")
-            .value
-            .toLowerCase()
-            .trim();
-
-
-    const sort =
-        $("#expense-sort")
-            .value;
-
-
-    let filtered =
-        [...transactions];
-
-
-    if (category) {
-
-        filtered =
-            filtered.filter(
-                transaction =>
-                    transaction.category ===
-                    category
-            );
-
-    }
-
-
-    if (search) {
-
-        filtered =
-            filtered.filter(
-                transaction =>
-                    transaction.description
-                        .toLowerCase()
-                        .includes(search)
-            );
-
-    }
-
-
-    if (sort === "newest") {
-
-        filtered.sort(
-            (a, b) =>
-                new Date(b.date)
-                - new Date(a.date)
-        );
-
-    }
-
-
-    if (sort === "oldest") {
-
-        filtered.sort(
-            (a, b) =>
-                new Date(a.date)
-                - new Date(b.date)
-        );
-
-    }
-
-
-    if (sort === "highest") {
-
-        filtered.sort(
-            (a, b) =>
-                Number(b.amount)
-                - Number(a.amount)
-        );
-
-    }
-
-
-    if (sort === "lowest") {
-
-        filtered.sort(
-            (a, b) =>
-                Number(a.amount)
-                - Number(b.amount)
-        );
-
-    }
-
-
-    if (filtered.length === 0) {
-
-        list.innerHTML = `
-            <div class="empty-state">
-                Belum ada data pengeluaran.
-            </div>
-        `;
-
-        return;
-    }
-
-
-    list.innerHTML =
-        filtered
-            .map(transaction => {
-
-                const safeId =
-                    escapeHTML(transaction.id);
-
-                const safeDate =
-                    escapeHTML(transaction.date);
-
-                const safeCategory =
-                    escapeHTML(transaction.category);
-
-                const safeDescription =
-                    escapeHTML(transaction.description);
-
-
-                return `
-                    <article class="list-item">
-
-                        <div class="list-item-header">
-
-                            <div>
-
-                                <h3>
-                                    ${safeDescription}
-                                </h3>
-
-                                <p>
-                                    Tanggal:
-                                    ${safeDate}
-                                </p>
-
-                                <p>
-                                    Jumlah:
-                                    <strong>
-                                        ${formatRupiah(transaction.amount)}
-                                    </strong>
-                                </p>
-
-                                <span class="badge">
-                                    ${safeCategory}
-                                </span>
-
-                            </div>
-
-
-                            <div class="item-actions">
-
-                                <button
-                                    type="button"
-                                    class="btn btn-warning edit-expense"
-                                    data-id="${safeId}"
-                                    aria-label="Edit pengeluaran ${safeDescription}"
-                                >
-                                    Edit
-                                </button>
-
-
-                                <button
-                                    type="button"
-                                    class="btn btn-danger delete-expense"
-                                    data-id="${safeId}"
-                                    aria-label="Hapus pengeluaran ${safeDescription}"
-                                >
-                                    Hapus
-                                </button>
-
-                            </div>
-
-                        </div>
-
-                    </article>
-                `;
-
-            })
-            .join("");
-
-}
-
-
-/* =========================================================
-   10. ADD EXPENSE
-========================================================= */
-
-function handleExpenseSubmit(event) {
+/* =======================================================
+   8. TRANSACTION CREATE
+======================================================= */
+
+function addTransaction(event) {
 
     event.preventDefault();
 
+    const data = {
+        title:
+            $("#transaction-title")
+                .value
+                .trim(),
 
-    clearErrors("expense-");
+        amount:
+            Number(
+                $("#transaction-amount")
+                    .value
+            ),
+
+        type:
+            $("#transaction-type")
+                .value,
+
+        date:
+            $("#transaction-date")
+                .value,
+
+        category:
+            $("#transaction-category")
+                .value
+                .trim()
+    };
 
 
-    const date =
-        $("#expense-date").value;
-
-    const category =
-        $("#expense-category").value;
-
-    const amount =
-        $("#expense-amount").value;
-
-    const description =
-        $("#expense-description").value.trim();
-
-
-    const valid =
-        validateExpense(
-            date,
-            category,
-            amount,
-            description
-        );
-
-
-    if (!valid) {
+    if (!validateTransaction(data)) {
         return;
     }
 
 
-    const transaction = {
-
+    transactions.push({
         id: createId(),
-
-        date,
-
-        category,
-
-        amount: Number(amount),
-
-        description
-
-    };
-
-
-    transactions.push(
-        transaction
-    );
+        ...data,
+        createdAt:
+            new Date().toISOString()
+    });
 
 
     saveData(
@@ -808,29 +551,299 @@ function handleExpenseSubmit(event) {
     );
 
 
-    $("#expense-form").reset();
+    event.target.reset();
+
+    clearErrors([
+        "#transaction-title-error",
+        "#transaction-amount-error",
+        "#transaction-date-error",
+        "#transaction-category-error"
+    ]);
 
 
     renderTransactions();
 
-    updateExpenseSummary();
+    updateTransactionSummary();
 
+
+    showFormMessage(
+        "#transaction-form-message",
+        "Transaksi berhasil ditambahkan."
+    );
 }
 
 
-/* =========================================================
-   11. DELETE EXPENSE
-========================================================= */
+/* =======================================================
+   9. TRANSACTION FILTER
+======================================================= */
+
+function getFilteredTransactions() {
+
+    const search =
+        $("#transaction-search")
+            .value
+            .toLowerCase()
+            .trim();
+
+    const filter =
+        $("#transaction-filter")
+            .value;
+
+    const sort =
+        $("#transaction-sort")
+            .value;
+
+
+    let result =
+        transactions.filter(transaction => {
+
+            const matchesSearch =
+                !search
+                || transaction.title
+                    .toLowerCase()
+                    .includes(search)
+                || transaction.category
+                    .toLowerCase()
+                    .includes(search);
+
+
+            const matchesFilter =
+                filter === "all"
+                || transaction.type === filter;
+
+
+            return (
+                matchesSearch
+                && matchesFilter
+            );
+
+        });
+
+
+    result.sort((a, b) => {
+
+        switch (sort) {
+
+            case "oldest":
+                return (
+                    new Date(a.date)
+                    - new Date(b.date)
+                );
+
+            case "highest":
+                return b.amount - a.amount;
+
+            case "lowest":
+                return a.amount - b.amount;
+
+            case "title":
+                return a.title.localeCompare(
+                    b.title
+                );
+
+            case "newest":
+            default:
+                return (
+                    new Date(b.date)
+                    - new Date(a.date)
+                );
+        }
+    });
+
+
+    return result;
+}
+
+
+/* =======================================================
+   10. TRANSACTION RENDER
+======================================================= */
+
+function renderTransactions() {
+
+    const container =
+        $("#transaction-list");
+
+    const data =
+        getFilteredTransactions();
+
+
+    if (!data.length) {
+
+        container.innerHTML = `
+            <div class="empty-state">
+                Tidak ada transaksi yang ditemukan.
+            </div>
+        `;
+
+        return;
+    }
+
+
+    container.innerHTML =
+        data.map(transaction => {
+
+            const income =
+                transaction.type === "income";
+
+            return `
+                <article
+                    class="list-item"
+                    data-id="${escapeHTML(transaction.id)}"
+                >
+
+                    <div class="item-info">
+
+                        <span
+                            class="type-badge ${
+                                income
+                                    ? "type-income"
+                                    : "type-expense"
+                            }"
+                        >
+                            ${
+                                income
+                                    ? "PEMASUKAN"
+                                    : "PENGELUARAN"
+                            }
+                        </span>
+
+                        <h3>
+                            ${escapeHTML(
+                                transaction.title
+                            )}
+                        </h3>
+
+                        <p>
+                            Kategori:
+                            ${escapeHTML(
+                                transaction.category
+                            )}
+                        </p>
+
+                        <p>
+                            Tanggal:
+                            ${escapeHTML(
+                                transaction.date
+                            )}
+                        </p>
+
+                    </div>
+
+                    <div>
+
+                        <div
+                            class="amount ${
+                                income
+                                    ? "income"
+                                    : "expense"
+                            }"
+                        >
+                            ${income ? "+" : "-"}
+                            ${formatRupiah(
+                                transaction.amount
+                            )}
+                        </div>
+
+                        <div class="item-actions">
+
+                            <button
+                                type="button"
+                                class="btn btn-primary btn-small"
+                                data-action="edit-transaction"
+                                data-id="${escapeHTML(transaction.id)}"
+                                aria-label="Edit ${escapeHTML(transaction.title)}"
+                            >
+                                Edit
+                            </button>
+
+                            <button
+                                type="button"
+                                class="btn btn-danger btn-small"
+                                data-action="delete-transaction"
+                                data-id="${escapeHTML(transaction.id)}"
+                                aria-label="Hapus ${escapeHTML(transaction.title)}"
+                            >
+                                Hapus
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </article>
+            `;
+
+        }).join("");
+}
+
+
+/* =======================================================
+   11. TRANSACTION SUMMARY
+======================================================= */
+
+function updateTransactionSummary() {
+
+    let income = 0;
+    let expense = 0;
+
+
+    for (
+        const transaction
+        of transactions
+    ) {
+
+        if (
+            transaction.type ===
+            "income"
+        ) {
+            income +=
+                Number(transaction.amount);
+        } else {
+            expense +=
+                Number(transaction.amount);
+        }
+    }
+
+
+    const balance =
+        income - expense;
+
+
+    $("#total-income").textContent =
+        formatRupiah(income);
+
+    $("#total-expense").textContent =
+        formatRupiah(expense);
+
+    $("#total-balance").textContent =
+        formatRupiah(balance);
+}
+
+
+/* =======================================================
+   12. TRANSACTION DELETE
+======================================================= */
 
 function deleteTransaction(id) {
 
-    const confirmed =
-        window.confirm(
-            "Yakin ingin menghapus pengeluaran ini?"
+    const item =
+        transactions.find(
+            transaction =>
+                transaction.id === id
         );
 
 
-    if (!confirmed) {
+    if (!item) {
+        return;
+    }
+
+
+    if (
+        !window.confirm(
+            `Hapus transaksi "${item.title}"?`
+        )
+    ) {
         return;
     }
 
@@ -849,141 +862,129 @@ function deleteTransaction(id) {
 
 
     renderTransactions();
-
-    updateExpenseSummary();
-
+    updateTransactionSummary();
 }
 
 
-/* =========================================================
-   12. OPEN EXPENSE MODAL
-========================================================= */
+/* =======================================================
+   13. TRANSACTION EDIT
+======================================================= */
 
-function openExpenseModal(id) {
+function openTransactionEdit(id) {
 
-    const transaction =
+    const item =
         transactions.find(
-            item =>
-                item.id === id
-        );
-
-
-    if (!transaction) {
-        return;
-    }
-
-
-    $("#edit-expense-id").value =
-        transaction.id;
-
-
-    $("#edit-expense-date").value =
-        transaction.date;
-
-
-    $("#edit-expense-category").value =
-        transaction.category;
-
-
-    $("#edit-expense-amount").value =
-        transaction.amount;
-
-
-    $("#edit-expense-description").value =
-        transaction.description;
-
-
-    clearErrors("edit-expense-");
-
-
-    const modal =
-        $("#expense-modal");
-
-
-    modal.classList.add("show");
-
-    modal.setAttribute(
-        "aria-hidden",
-        "false"
-    );
-
-}
-
-
-/* =========================================================
-   13. UPDATE EXPENSE
-========================================================= */
-
-function handleEditExpense(event) {
-
-    event.preventDefault();
-
-
-    clearErrors("edit-expense-");
-
-
-    const id =
-        $("#edit-expense-id").value;
-
-
-    const date =
-        $("#edit-expense-date").value;
-
-
-    const category =
-        $("#edit-expense-category").value;
-
-
-    const amount =
-        $("#edit-expense-amount").value;
-
-
-    const description =
-        $("#edit-expense-description")
-            .value
-            .trim();
-
-
-    const valid =
-        validateExpense(
-            date,
-            category,
-            amount,
-            description,
-            "edit-expense"
-        );
-
-
-    if (!valid) {
-        return;
-    }
-
-
-    const index =
-        transactions.findIndex(
             transaction =>
                 transaction.id === id
         );
 
 
-    if (index === -1) {
+    if (!item) {
         return;
     }
 
 
-    transactions[index] = {
+    $("#edit-transaction-id").value =
+        item.id;
 
-        ...transactions[index],
+    $("#edit-transaction-title").value =
+        item.title;
 
-        date,
+    $("#edit-transaction-amount").value =
+        item.amount;
 
-        category,
+    $("#edit-transaction-type").value =
+        item.type;
 
-        amount: Number(amount),
+    $("#edit-transaction-date").value =
+        item.date;
 
-        description
+    $("#edit-transaction-category").value =
+        item.category;
 
-    };
+
+    openModal(
+        "transaction-modal"
+    );
+}
+
+
+function updateTransaction(event) {
+
+    event.preventDefault();
+
+
+    const id =
+        $("#edit-transaction-id")
+            .value;
+
+
+    const item =
+        transactions.find(
+            transaction =>
+                transaction.id === id
+        );
+
+
+    if (!item) {
+        return;
+    }
+
+
+    const title =
+        $("#edit-transaction-title")
+            .value
+            .trim();
+
+    const amount =
+        Number(
+            $("#edit-transaction-amount")
+                .value
+        );
+
+    const type =
+        $("#edit-transaction-type")
+            .value;
+
+    const date =
+        $("#edit-transaction-date")
+            .value;
+
+    const category =
+        $("#edit-transaction-category")
+            .value
+            .trim();
+
+
+    if (!title) {
+        alert("Judul transaksi wajib diisi.");
+        return;
+    }
+
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+        alert("Jumlah transaksi harus lebih dari 0.");
+        return;
+    }
+
+
+    if (!date) {
+        alert("Tanggal transaksi wajib diisi.");
+        return;
+    }
+
+
+    if (!category) {
+        alert("Kategori transaksi wajib diisi.");
+        return;
+    }
+
+
+    item.title = title;
+    item.amount = amount;
+    item.type = type;
+    item.date = date;
+    item.category = category;
 
 
     saveData(
@@ -993,93 +994,85 @@ function handleEditExpense(event) {
 
 
     closeModal(
-        "expense-modal"
+        "transaction-modal"
     );
 
-
     renderTransactions();
-
-    updateExpenseSummary();
-
+    updateTransactionSummary();
 }
 
 
-/* =========================================================
+/* =======================================================
    14. BOOKMARK VALIDATION
-========================================================= */
+======================================================= */
 
-function validateBookmark(
-    title,
-    category,
-    url,
-    prefix = "bookmark"
-) {
+function isValidURL(url) {
+
+    try {
+
+        const parsed =
+            new URL(url);
+
+        return (
+            parsed.protocol === "http:"
+            || parsed.protocol === "https:"
+        );
+
+    } catch {
+
+        return false;
+    }
+}
+
+
+function validateBookmark(data) {
 
     let valid = true;
 
 
-    if (!title.trim()) {
+    const titleInvalid =
+        !data.title.trim();
 
-        showError(
-            `${prefix}-title-error`,
-            "Judul wajib diisi."
-        );
+    const urlInvalid =
+        !data.url.trim()
+        || !isValidURL(data.url);
 
+    const categoryInvalid =
+        !data.category.trim();
+
+
+    setInvalid(
+        "#bookmark-title",
+        "#bookmark-title-error",
+        titleInvalid,
+        "Nama bookmark wajib diisi."
+    );
+
+
+    setInvalid(
+        "#bookmark-url",
+        "#bookmark-url-error",
+        urlInvalid,
+        data.url.trim()
+            ? "URL harus menggunakan http:// atau https://."
+            : "URL wajib diisi."
+    );
+
+
+    setInvalid(
+        "#bookmark-category",
+        "#bookmark-category-error",
+        categoryInvalid,
+        "Kategori wajib diisi."
+    );
+
+
+    if (
+        titleInvalid
+        || urlInvalid
+        || categoryInvalid
+    ) {
         valid = false;
-
-    }
-
-
-    if (!category) {
-
-        showError(
-            `${prefix}-category-error`,
-            "Kategori wajib dipilih."
-        );
-
-        valid = false;
-
-    }
-
-
-    if (!url.trim()) {
-
-        showError(
-            `${prefix}-url-error`,
-            "URL wajib diisi."
-        );
-
-        valid = false;
-
-    } else {
-
-        try {
-
-            const parsed =
-                new URL(url);
-
-            if (
-                parsed.protocol !== "http:"
-                && parsed.protocol !== "https:"
-            ) {
-
-                throw new Error(
-                    "URL tidak valid"
-                );
-
-            }
-
-        } catch {
-
-            showError(
-                `${prefix}-url-error`,
-                "Masukkan URL yang valid, contoh: https://example.com"
-            );
-
-            valid = false;
-
-        }
-
     }
 
 
@@ -1087,67 +1080,45 @@ function validateBookmark(
 }
 
 
-/* =========================================================
-   15. ADD BOOKMARK
-========================================================= */
+/* =======================================================
+   15. BOOKMARK CREATE
+======================================================= */
 
-function handleBookmarkSubmit(event) {
+function addBookmark(event) {
 
     event.preventDefault();
 
 
-    clearErrors("bookmark-");
+    const data = {
+
+        title:
+            $("#bookmark-title")
+                .value
+                .trim(),
+
+        url:
+            $("#bookmark-url")
+                .value
+                .trim(),
+
+        category:
+            $("#bookmark-category")
+                .value
+                .trim()
+    };
 
 
-    const title =
-        $("#bookmark-title-input")
-            .value
-            .trim();
-
-
-    const category =
-        $("#bookmark-category")
-            .value;
-
-
-    const url =
-        $("#bookmark-url")
-            .value
-            .trim();
-
-
-    const valid =
-        validateBookmark(
-            title,
-            category,
-            url
-        );
-
-
-    if (!valid) {
+    if (!validateBookmark(data)) {
         return;
     }
 
 
-    const bookmark = {
-
+    bookmarks.push({
         id: createId(),
-
-        title,
-
-        category,
-
-        url,
-
+        ...data,
         createdAt:
             new Date().toISOString()
-
-    };
-
-
-    bookmarks.push(
-        bookmark
-    );
+    });
 
 
     saveData(
@@ -1156,28 +1127,23 @@ function handleBookmarkSubmit(event) {
     );
 
 
-    $("#bookmark-form").reset();
-
+    event.target.reset();
 
     renderBookmarks();
 
+
+    showFormMessage(
+        "#bookmark-form-message",
+        "Bookmark berhasil ditambahkan."
+    );
 }
 
 
-/* =========================================================
-   16. RENDER BOOKMARK
-========================================================= */
+/* =======================================================
+   16. BOOKMARK FILTER
+======================================================= */
 
-function renderBookmarks() {
-
-    const list =
-        $("#bookmark-list");
-
-
-    if (!list) {
-        return;
-    }
-
+function getFilteredBookmarks() {
 
     const search =
         $("#bookmark-search")
@@ -1185,99 +1151,84 @@ function renderBookmarks() {
             .toLowerCase()
             .trim();
 
-
-    const category =
-        $("#bookmark-filter-category")
-            .value;
-
-
     const sort =
         $("#bookmark-sort")
             .value;
 
 
-    let filtered =
-        [...bookmarks];
+    let result =
+        bookmarks.filter(bookmark => {
 
+            if (!search) {
+                return true;
+            }
 
-    if (search) {
-
-        filtered =
-            filtered.filter(
-                bookmark =>
-                    bookmark.title
-                        .toLowerCase()
-                        .includes(search)
+            return (
+                bookmark.title
+                    .toLowerCase()
+                    .includes(search)
+                || bookmark.url
+                    .toLowerCase()
+                    .includes(search)
+                || bookmark.category
+                    .toLowerCase()
+                    .includes(search)
             );
-
-    }
-
-
-    if (category) {
-
-        filtered =
-            filtered.filter(
-                bookmark =>
-                    bookmark.category ===
-                    category
-            );
-
-    }
+        });
 
 
-    if (sort === "newest") {
+    result.sort((a, b) => {
 
-        filtered.sort(
-            (a, b) =>
-                new Date(b.createdAt)
-                - new Date(a.createdAt)
-        );
+        switch (sort) {
 
-    }
+            case "oldest":
+                return (
+                    new Date(a.createdAt)
+                    - new Date(b.createdAt)
+                );
 
+            case "title":
+                return a.title.localeCompare(
+                    b.title
+                );
 
-    if (sort === "oldest") {
+            case "category":
+                return a.category.localeCompare(
+                    b.category
+                );
 
-        filtered.sort(
-            (a, b) =>
-                new Date(a.createdAt)
-                - new Date(b.createdAt)
-        );
-
-    }
-
-
-    if (sort === "title-asc") {
-
-        filtered.sort(
-            (a, b) =>
-                a.title.localeCompare(
-                    b.title,
-                    "id"
-                )
-        );
-
-    }
+            case "newest":
+            default:
+                return (
+                    new Date(b.createdAt)
+                    - new Date(a.createdAt)
+                );
+        }
+    });
 
 
-    if (sort === "title-desc") {
-
-        filtered.sort(
-            (a, b) =>
-                b.title.localeCompare(
-                    a.title,
-                    "id"
-                )
-        );
-
-    }
+    return result;
+}
 
 
-    if (filtered.length === 0) {
+/* =======================================================
+   17. BOOKMARK RENDER
+======================================================= */
 
-        list.innerHTML = `
+function renderBookmarks() {
+
+    const container =
+        $("#bookmark-list");
+
+    const data =
+        getFilteredBookmarks();
+
+
+    if (!data.length) {
+
+        container.innerHTML = `
             <div class="empty-state">
-                Belum ada bookmark.
+                Tidak ada bookmark yang ditemukan.
             </div>
         `;
 
@@ -1285,110 +1236,133 @@ function renderBookmarks() {
     }
 
 
-    list.innerHTML =
-        filtered
-            .map(bookmark => {
+    container.innerHTML =
+        data.map(bookmark => {
 
-                const safeId =
-                    escapeHTML(bookmark.id);
+            return `
+                <article
+                    class="list-item"
+                    data-id="${escapeHTML(bookmark.id)}"
+                >
 
-                const safeTitle =
-                    escapeHTML(bookmark.title);
+                    <div class="item-info">
 
-                const safeCategory =
-                    escapeHTML(bookmark.category);
+                        <h3>
+                            ${escapeHTML(
+                                bookmark.title
+                            )}
+                        </h3>
 
-                const safeUrl =
-                    escapeHTML(bookmark.url);
+                        <p>
+                            Kategori:
+                            ${escapeHTML(
+                                bookmark.category
+                            )}
+                        </p>
 
+                        <p class="bookmark-url">
+                            ${escapeHTML(
+                                bookmark.url
+                            )}
+                        </p>
 
-                return `
-                    <article class="list-item">
+                    </div>
 
-                        <div class="list-item-header">
+                    <div class="item-actions">
 
-                            <div>
+                        <button
+                            type="button"
+                            class="btn btn-success btn-small"
+                            data-action="open-bookmark"
+                            data-id="${escapeHTML(bookmark.id)}"
+                            aria-label="Buka ${escapeHTML(bookmark.title)}"
+                        >
+                            Buka
+                        </button>
 
-                                <h3>
-                                    ${safeTitle}
-                                </h3>
+                        <button
+                            type="button"
+                            class="btn btn-primary btn-small"
+                            data-action="edit-bookmark"
+                            data-id="${escapeHTML(bookmark.id)}"
+                            aria-label="Edit ${escapeHTML(bookmark.title)}"
+                        >
+                            Edit
+                        </button>
 
-                                <p>
-                                    <span class="badge">
-                                        ${safeCategory}
-                                    </span>
-                                </p>
+                        <button
+                            type="button"
+                            class="btn btn-danger btn-small"
+                            data-action="delete-bookmark"
+                            data-id="${escapeHTML(bookmark.id)}"
+                            aria-label="Hapus ${escapeHTML(bookmark.title)}"
+                        >
+                            Hapus
+                        </button>
 
-                                <p>
-                                    <a
-                                        class="bookmark-url"
-                                        href="${safeUrl}"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        aria-label="Buka bookmark ${safeTitle} di tab baru"
-                                    >
-                                        ${safeUrl}
-                                    </a>
-                                </p>
+                    </div>
 
-                            </div>
+                </article>
+            `;
 
-
-                            <div class="item-actions">
-
-                                <button
-                                    type="button"
-                                    class="btn btn-warning edit-bookmark"
-                                    data-id="${safeId}"
-                                    aria-label="Edit bookmark ${safeTitle}"
-                                >
-                                    Edit
-                                </button>
-
-
-                                <button
-                                    type="button"
-                                    class="btn btn-danger delete-bookmark"
-                                    data-id="${safeId}"
-                                    aria-label="Hapus bookmark ${safeTitle}"
-                                >
-                                    Hapus
-                                </button>
-
-                            </div>
-
-                        </div>
-
-                    </article>
-                `;
-
-            })
-            .join("");
-
+        }).join("");
 }
 
 
-/* =========================================================
-   17. DELETE BOOKMARK
-========================================================= */
+/* =======================================================
+   18. BOOKMARK OPEN
+======================================================= */
 
-function deleteBookmark(id) {
+function openBookmark(id) {
 
-    const confirmed =
-        window.confirm(
-            "Yakin ingin menghapus bookmark ini?"
+    const bookmark =
+        bookmarks.find(
+            item => item.id === id
         );
 
 
-    if (!confirmed) {
+    if (!bookmark) {
+        return;
+    }
+
+
+    window.open(
+        bookmark.url,
+        "_blank",
+        "noopener,noreferrer"
+    );
+}
+
+
+/* =======================================================
+   19. BOOKMARK DELETE
+======================================================= */
+
+function deleteBookmark(id) {
+
+    const bookmark =
+        bookmarks.find(
+            item => item.id === id
+        );
+
+
+    if (!bookmark) {
+        return;
+    }
+
+
+    if (
+        !window.confirm(
+            `Hapus bookmark "${bookmark.title}"?`
+        )
+    ) {
         return;
     }
 
 
     bookmarks =
         bookmarks.filter(
-            bookmark =>
-                bookmark.id !== id
+            item => item.id !== id
         );
 
 
@@ -1399,20 +1373,18 @@ function deleteBookmark(id) {
 
 
     renderBookmarks();
-
 }
 
 
-/* =========================================================
-   18. OPEN BOOKMARK MODAL
-========================================================= */
+/* =======================================================
+   20. BOOKMARK EDIT
+======================================================= */
 
-function openBookmarkModal(id) {
+function openBookmarkEdit(id) {
 
     const bookmark =
         bookmarks.find(
-            item =>
-                item.id === id
+            item => item.id === id
         );
 
 
@@ -1424,46 +1396,25 @@ function openBookmarkModal(id) {
     $("#edit-bookmark-id").value =
         bookmark.id;
 
-
     $("#edit-bookmark-title").value =
         bookmark.title;
 
+    $("#edit-bookmark-url").value =
+        bookmark.url;
 
     $("#edit-bookmark-category").value =
         bookmark.category;
 
 
-    $("#edit-bookmark-url").value =
-        bookmark.url;
-
-
-    clearErrors("edit-bookmark-");
-
-
-    const modal =
-        $("#bookmark-modal");
-
-
-    modal.classList.add("show");
-
-    modal.setAttribute(
-        "aria-hidden",
-        "false"
+    openModal(
+        "bookmark-modal"
     );
-
 }
 
 
-/* =========================================================
-   19. UPDATE BOOKMARK
-========================================================= */
-
-function handleEditBookmark(event) {
+function updateBookmark(event) {
 
     event.preventDefault();
-
-
-    clearErrors("edit-bookmark-");
 
 
     const id =
@@ -1471,60 +1422,60 @@ function handleEditBookmark(event) {
             .value;
 
 
+    const bookmark =
+        bookmarks.find(
+            item => item.id === id
+        );
+
+
+    if (!bookmark) {
+        return;
+    }
+
+
     const title =
         $("#edit-bookmark-title")
             .value
             .trim();
-
-
-    const category =
-        $("#edit-bookmark-category")
-            .value;
-
 
     const url =
         $("#edit-bookmark-url")
             .value
             .trim();
 
+    const category =
+        $("#edit-bookmark-category")
+            .value
+            .trim();
 
-    const valid =
-        validateBookmark(
-            title,
-            category,
-            url,
-            "edit-bookmark"
+
+    if (!title) {
+        alert(
+            "Nama bookmark wajib diisi."
         );
-
-
-    if (!valid) {
         return;
     }
 
 
-    const index =
-        bookmarks.findIndex(
-            bookmark =>
-                bookmark.id === id
+    if (!isValidURL(url)) {
+        alert(
+            "URL tidak valid. Gunakan http:// atau https://."
         );
-
-
-    if (index === -1) {
         return;
     }
 
 
-    bookmarks[index] = {
+    if (!category) {
+        alert(
+            "Kategori wajib diisi."
+        );
+        return;
+    }
 
-        ...bookmarks[index],
 
-        title,
-
-        category,
-
-        url
-
-    };
+    bookmark.title = title;
+    bookmark.url = url;
+    bookmark.category = category;
 
 
     saveData(
@@ -1537,43 +1488,120 @@ function handleEditBookmark(event) {
         "bookmark-modal"
     );
 
-
     renderBookmarks();
-
 }
 
 
-/* =========================================================
-   20. MODAL
-========================================================= */
+/* =======================================================
+   21. FORM MESSAGE
+======================================================= */
 
-function closeModal(modalId) {
+function showFormMessage(
+    selector,
+    message
+) {
+
+    const element =
+        $(selector);
+
+    if (!element) {
+        return;
+    }
+
+
+    element.innerHTML = `
+        <p class="success-message">
+            ${escapeHTML(message)}
+        </p>
+    `;
+
+
+    window.setTimeout(() => {
+
+        element.textContent = "";
+
+    }, 2500);
+}
+
+
+/* =======================================================
+   22. MODAL
+======================================================= */
+
+let activeModal = null;
+let previousFocusedElement = null;
+
+
+function openModal(id) {
 
     const modal =
-        $(`#${modalId}`);
-
+        document.getElementById(id);
 
     if (!modal) {
         return;
     }
 
 
-    modal.classList.remove(
-        "show"
+    previousFocusedElement =
+        document.activeElement;
+
+    activeModal = modal;
+
+
+    modal.classList.add("show");
+
+    modal.setAttribute(
+        "aria-hidden",
+        "false"
     );
 
+
+    const firstInput =
+        modal.querySelector(
+            "input:not([type='hidden']), select, button"
+        );
+
+
+    if (firstInput) {
+        firstInput.focus();
+    }
+}
+
+
+function closeModal(id) {
+
+    const modal =
+        document.getElementById(id);
+
+    if (!modal) {
+        return;
+    }
+
+
+    modal.classList.remove("show");
 
     modal.setAttribute(
         "aria-hidden",
         "true"
     );
 
+
+    if (
+        activeModal === modal
+        && previousFocusedElement
+    ) {
+
+        previousFocusedElement.focus();
+    }
+
+
+    activeModal = null;
 }
 
 
 function initializeModals() {
 
-    $$(".close-modal")
+    $$("[data-close-modal]")
         .forEach(button => {
 
             button.addEventListener(
@@ -1581,38 +1609,13 @@ function initializeModals() {
                 () => {
 
                     closeModal(
-                        button.dataset.modal
+                        button.dataset.closeModal
                     );
 
                 }
             );
 
         });
-
-
-    $$(
-        '[data-modal]'
-    ).forEach(button => {
-
-        if (
-            !button.classList
-                .contains("close-modal")
-        ) {
-
-            button.addEventListener(
-                "click",
-                () => {
-
-                    closeModal(
-                        button.dataset.modal
-                    );
-
-                }
-            );
-
-        }
-
-    });
 
 
     $$(".modal")
@@ -1631,7 +1634,6 @@ function initializeModals() {
                         );
 
                     }
-
                 }
             );
 
@@ -1642,74 +1644,62 @@ function initializeModals() {
         "keydown",
         event => {
 
-            if (event.key !== "Escape") {
-                return;
+            if (
+                event.key === "Escape"
+                && activeModal
+            ) {
+
+                closeModal(
+                    activeModal.id
+                );
             }
-
-
-            $$(".modal.show")
-                .forEach(modal => {
-
-                    closeModal(
-                        modal.id
-                    );
-
-                });
-
         }
     );
-
 }
 
 
-/* =========================================================
-   21. QUIZ
-========================================================= */
+/* =======================================================
+   23. QUIZ
+======================================================= */
 
 function startQuiz() {
 
     quizState = {
-
-        currentQuestion: 0,
-
+        currentQuestionIndex: 0,
         score: 0,
-
         selectedAnswer: null,
-
-        finished: false
-
+        answered: false,
+        quizFinished: false
     };
 
 
-    $("#quiz-start").hidden =
-        true;
+    $("#quiz-start")
+        .classList
+        .add("hidden");
+
+    $("#quiz-result")
+        .classList
+        .add("hidden");
+
+    $("#quiz-question")
+        .classList
+        .remove("hidden");
 
 
-    $("#quiz-question").hidden =
-        false;
-
-
-    $("#quiz-result").hidden =
-        true;
-
-
-    renderQuizQuestion();
-
+    renderQuestion();
 }
 
 
-function renderQuizQuestion() {
+function renderQuestion() {
 
     const question =
         quizQuestions[
-            quizState.currentQuestion
+            quizState.currentQuestionIndex
         ];
 
 
     if (!question) {
-
         finishQuiz();
-
         return;
     }
 
@@ -1717,14 +1707,18 @@ function renderQuizQuestion() {
     quizState.selectedAnswer =
         null;
 
+    quizState.answered =
+        false;
 
-    $("#quiz-progress")
+
+    $("#current-question-number")
         .textContent =
-        `Pertanyaan ${
-            quizState.currentQuestion + 1
-        } dari ${
-            quizQuestions.length
-        }`;
+        quizState.currentQuestionIndex + 1;
+
+
+    $("#total-question-number")
+        .textContent =
+        quizQuestions.length;
 
 
     $("#question-text")
@@ -1732,161 +1726,215 @@ function renderQuizQuestion() {
         question.question;
 
 
-    const options =
-        $("#quiz-options");
+    $("#quiz-options").innerHTML =
+        question.options
+            .map((option, index) => `
+                <button
+                    type="button"
+                    class="quiz-option"
+                    data-option-index="${index}"
+                    aria-pressed="false"
+                >
+                    ${escapeHTML(option)}
+                </button>
+            `)
+            .join("");
 
 
-    options.innerHTML = "";
+    const feedback =
+        $("#quiz-feedback");
+
+    feedback.className =
+        "quiz-feedback";
+
+    feedback.textContent =
+        "";
 
 
-    question.options
-        .forEach(
-            (option, index) => {
-
-                const button =
-                    document.createElement(
-                        "button"
-                    );
-
-
-                button.type =
-                    "button";
-
-
-                button.className =
-                    "quiz-option";
-
-
-                button.textContent =
-                    option;
-
-
-                button.setAttribute(
-                    "aria-label",
-                    `Pilihan ${
-                        index + 1
-                    }: ${option}`
-                );
-
-
-                button.dataset.index =
-                    index;
-
-
-                button.addEventListener(
-                    "click",
-                    () => {
-
-                        selectQuizAnswer(
-                            index
-                        );
-
-                    }
-                );
-
-
-                options.appendChild(
-                    button
-                );
-
-            }
-        );
-
+    $("#submit-answer")
+        .classList
+        .remove("hidden");
 
     $("#next-question")
-        .disabled = true;
-
+        .classList
+        .add("hidden");
 }
 
 
+/* =======================================================
+   24. QUIZ SELECT
+======================================================= */
+
 function selectQuizAnswer(index) {
+
+    if (quizState.answered) {
+        return;
+    }
+
 
     quizState.selectedAnswer =
         index;
 
 
     $$(".quiz-option")
-        .forEach(button => {
+        .forEach(option => {
 
-            const isSelected =
+            const selected =
                 Number(
-                    button.dataset.index
+                    option.dataset.optionIndex
                 ) === index;
 
 
-            button.classList.toggle(
+            option.classList.toggle(
                 "selected",
-                isSelected
+                selected
             );
 
-            button.setAttribute(
+
+            option.setAttribute(
                 "aria-pressed",
-                String(isSelected)
+                String(selected)
             );
 
         });
-
-
-    $("#next-question")
-        .disabled = false;
-
 }
 
 
-function submitQuizAnswer() {
+/* =======================================================
+   25. QUIZ SUBMIT
+======================================================= */
+
+function submitAnswer() {
+
+    if (quizState.answered) {
+        return;
+    }
+
 
     if (
-        quizState.selectedAnswer ===
-        null
+        quizState.selectedAnswer === null
     ) {
+
+        const feedback =
+            $("#quiz-feedback");
+
+        feedback.textContent =
+            "Silakan pilih salah satu jawaban terlebih dahulu.";
+
+        feedback.className =
+            "quiz-feedback show incorrect";
+
         return;
     }
 
 
     const question =
         quizQuestions[
-            quizState.currentQuestion
+            quizState.currentQuestionIndex
         ];
 
 
-    if (
+    quizState.answered =
+        true;
+
+
+    const correct =
         quizState.selectedAnswer ===
-        question.answer
-    ) {
+        question.answer;
+
+
+    const feedback =
+        $("#quiz-feedback");
+
+
+    if (correct) {
 
         quizState.score++;
 
+        feedback.textContent =
+            "Jawaban benar!";
+
+        feedback.className =
+            "quiz-feedback show correct";
+
+    } else {
+
+        feedback.textContent =
+            `Jawaban kurang tepat. Jawaban yang benar adalah: ${question.options[question.answer]}.`;
+
+        feedback.className =
+            "quiz-feedback show incorrect";
     }
 
 
-    quizState.currentQuestion++;
+    $$(".quiz-option")
+        .forEach(option => {
+
+            option.disabled = true;
+
+        });
+
+
+    $("#submit-answer")
+        .classList
+        .add("hidden");
+
+    $("#next-question")
+        .classList
+        .remove("hidden");
+}
+
+
+/* =======================================================
+   26. QUIZ NEXT
+======================================================= */
+
+function nextQuestion() {
+
+    if (!quizState.answered) {
+        return;
+    }
+
+
+    quizState.currentQuestionIndex++;
 
 
     if (
-        quizState.currentQuestion >=
-        quizQuestions.length
+        quizState.currentQuestionIndex
+        >= quizQuestions.length
     ) {
 
         finishQuiz();
 
-    } else {
-
-        renderQuizQuestion();
-
+        return;
     }
 
+
+    renderQuestion();
 }
 
 
+/* =======================================================
+   27. QUIZ FINISH
+======================================================= */
+
 function finishQuiz() {
 
-    quizState.finished =
+    quizState.quizFinished =
         true;
+
+
+    $("#quiz-question")
+        .classList
+        .add("hidden");
+
+    $("#quiz-result")
+        .classList
+        .remove("hidden");
 
 
     const total =
         quizQuestions.length;
-
 
     const score =
         quizState.score;
@@ -1898,26 +1946,13 @@ function finishQuiz() {
         );
 
 
-    $("#quiz-question").hidden =
-        true;
-
-
-    $("#quiz-result").hidden =
-        false;
-
-
     $("#quiz-score")
         .textContent =
-        `${percentage}%`;
+        `${score}/${total}`;
 
-
-    $("#quiz-result-text")
+    $("#quiz-percentage")
         .textContent =
-        `Kamu menjawab ${
-            score
-        } dari ${
-            total
-        } pertanyaan dengan benar.`;
+        `${percentage}%`;
 
 
     if (score > highScore) {
@@ -1925,50 +1960,42 @@ function finishQuiz() {
         highScore =
             score;
 
-
-        saveData(
+        localStorage.setItem(
             STORAGE_KEYS.highScore,
-            highScore
+            String(highScore)
         );
-
     }
 
 
-    updateHighScore();
+    $("#high-score-result")
+        .textContent =
+        highScore;
 
+    $("#high-score-start")
+        .textContent =
+        highScore;
 }
 
 
 function restartQuiz() {
-
     startQuiz();
-
 }
 
 
-function updateHighScore() {
-
-    $("#high-score")
-        .textContent =
-        highScore;
-
-}
-
-
-/* =========================================================
-   22. EVENT DELEGATION
-========================================================= */
+/* =======================================================
+   28. EVENT DELEGATION
+======================================================= */
 
 function initializeListEvents() {
 
-    $("#expense-list")
+    $("#transaction-list")
         .addEventListener(
             "click",
             event => {
 
                 const button =
                     event.target.closest(
-                        "button"
+                        "[data-action]"
                     );
 
 
@@ -1977,31 +2004,25 @@ function initializeListEvents() {
                 }
 
 
-                const id =
-                    button.dataset.id;
+                const {
+                    action,
+                    id
+                } = button.dataset;
 
 
                 if (
-                    button.classList
-                        .contains(
-                            "delete-expense"
-                        )
+                    action ===
+                    "edit-transaction"
+                ) {
+
+                    openTransactionEdit(id);
+
+                } else if (
+                    action ===
+                    "delete-transaction"
                 ) {
 
                     deleteTransaction(id);
-
-                }
-
-
-                if (
-                    button.classList
-                        .contains(
-                            "edit-expense"
-                        )
-                ) {
-
-                    openExpenseModal(id);
-
                 }
 
             }
@@ -2015,7 +2036,7 @@ function initializeListEvents() {
 
                 const button =
                     event.target.closest(
-                        "button"
+                        "[data-action]"
                     );
 
 
@@ -2024,86 +2045,159 @@ function initializeListEvents() {
                 }
 
 
-                const id =
-                    button.dataset.id;
+                const {
+                    action,
+                    id
+                } = button.dataset;
 
 
                 if (
-                    button.classList
-                        .contains(
-                            "delete-bookmark"
-                        )
+                    action ===
+                    "open-bookmark"
+                ) {
+
+                    openBookmark(id);
+
+                } else if (
+                    action ===
+                    "edit-bookmark"
+                ) {
+
+                    openBookmarkEdit(id);
+
+                } else if (
+                    action ===
+                    "delete-bookmark"
                 ) {
 
                     deleteBookmark(id);
-
-                }
-
-
-                if (
-                    button.classList
-                        .contains(
-                            "edit-bookmark"
-                        )
-                ) {
-
-                    openBookmarkModal(id);
-
                 }
 
             }
         );
-
 }
 
 
-/* =========================================================
-   23. FILTER EVENTS
-========================================================= */
+/* =======================================================
+   29. QUIZ EVENT DELEGATION
+======================================================= */
 
-function initializeFilters() {
+function initializeQuizEvents() {
 
-    $("#expense-filter-category")
+    $("#start-quiz")
         .addEventListener(
-            "change",
-            renderTransactions
+            "click",
+            startQuiz
         );
 
 
-    $("#expense-filter-search")
+    $("#submit-answer")
+        .addEventListener(
+            "click",
+            submitAnswer
+        );
+
+
+    $("#next-question")
+        .addEventListener(
+            "click",
+            nextQuestion
+        );
+
+
+    $("#restart-quiz")
+        .addEventListener(
+            "click",
+            restartQuiz
+        );
+
+
+    $("#quiz-options")
+        .addEventListener(
+            "click",
+            event => {
+
+                const option =
+                    event.target.closest(
+                        ".quiz-option"
+                    );
+
+
+                if (!option) {
+                    return;
+                }
+
+
+                selectQuizAnswer(
+                    Number(
+                        option.dataset.optionIndex
+                    )
+                );
+
+            }
+        );
+}
+
+
+/* =======================================================
+   30. FORM EVENTS
+======================================================= */
+
+function initializeForms() {
+
+    $("#transaction-form")
+        .addEventListener(
+            "submit",
+            addTransaction
+        );
+
+
+    $("#bookmark-form")
+        .addEventListener(
+            "submit",
+            addBookmark
+        );
+
+
+    $("#transaction-edit-form")
+        .addEventListener(
+            "submit",
+            updateTransaction
+        );
+
+
+    $("#bookmark-edit-form")
+        .addEventListener(
+            "submit",
+            updateBookmark
+        );
+}
+
+
+/* =======================================================
+   31. FILTER EVENTS
+======================================================= */
+
+function initializeFilterEvents() {
+
+    $("#transaction-search")
         .addEventListener(
             "input",
             renderTransactions
         );
 
 
-    $("#expense-sort")
+    $("#transaction-filter")
         .addEventListener(
             "change",
             renderTransactions
         );
 
 
-    $("#reset-expense-filter")
+    $("#transaction-sort")
         .addEventListener(
-            "click",
-            () => {
-
-                $("#expense-filter-category")
-                    .value = "";
-
-
-                $("#expense-filter-search")
-                    .value = "";
-
-
-                $("#expense-sort")
-                    .value = "newest";
-
-
-                renderTransactions();
-
-            }
+            "change",
+            renderTransactions
         );
 
 
@@ -2114,175 +2208,160 @@ function initializeFilters() {
         );
 
 
-    $("#bookmark-filter-category")
-        .addEventListener(
-            "change",
-            renderBookmarks
-        );
-
-
     $("#bookmark-sort")
         .addEventListener(
             "change",
             renderBookmarks
         );
-
 }
 
 
-/* =========================================================
-   24. FORM EVENTS
-========================================================= */
+/* =======================================================
+   32. RESET EVENTS
+======================================================= */
 
-function initializeForms() {
+function initializeResetEvents() {
 
-    $("#expense-form")
-        .addEventListener(
-            "submit",
-            handleExpenseSubmit
-        );
-
-
-    $("#edit-expense-form")
-        .addEventListener(
-            "submit",
-            handleEditExpense
-        );
-
-
-    $("#bookmark-form")
-        .addEventListener(
-            "submit",
-            handleBookmarkSubmit
-        );
-
-
-    $("#edit-bookmark-form")
-        .addEventListener(
-            "submit",
-            handleEditBookmark
-        );
-
-}
-
-
-/* =========================================================
-   25. QUIZ EVENTS
-========================================================= */
-
-function initializeQuiz() {
-
-    $("#start-quiz")
+    $("#transaction-reset")
         .addEventListener(
             "click",
-            startQuiz
+            () => {
+
+                clearErrors([
+                    "#transaction-title-error",
+                    "#transaction-amount-error",
+                    "#transaction-date-error",
+                    "#transaction-category-error"
+                ]);
+
+                [
+                    "#transaction-title",
+                    "#transaction-amount",
+                    "#transaction-date",
+                    "#transaction-category"
+                ].forEach(selector => {
+
+                    const element =
+                        $(selector);
+
+                    if (element) {
+                        element.setAttribute(
+                            "aria-invalid",
+                            "false"
+                        );
+                    }
+                });
+
+
+                $("#transaction-form-message")
+                    .textContent = "";
+
+            }
         );
 
 
-    $("#next-question")
+    $("#bookmark-reset")
         .addEventListener(
             "click",
-            submitQuizAnswer
+            () => {
+
+                clearErrors([
+                    "#bookmark-title-error",
+                    "#bookmark-url-error",
+                    "#bookmark-category-error"
+                ]);
+
+                [
+                    "#bookmark-title",
+                    "#bookmark-url",
+                    "#bookmark-category"
+                ].forEach(selector => {
+
+                    const element =
+                        $(selector);
+
+                    if (element) {
+                        element.setAttribute(
+                            "aria-invalid",
+                            "false"
+                        );
+                    }
+                });
+
+
+                $("#bookmark-form-message")
+                    .textContent = "";
+
+            }
         );
-
-
-    $("#restart-quiz")
-        .addEventListener(
-            "click",
-            restartQuiz
-        );
-
 }
 
 
-/* =========================================================
-   26. LOAD DATA
-========================================================= */
+/* =======================================================
+   33. INITIALIZATION
+======================================================= */
 
-function initializeData() {
-
-    transactions =
-        loadData(
-            STORAGE_KEYS.transactions,
-            []
-        );
-
-
-    bookmarks =
-        loadData(
-            STORAGE_KEYS.bookmarks,
-            []
-        );
-
-
-    highScore =
-        Number(
-            localStorage.getItem(
-                STORAGE_KEYS.highScore
-            )
-        ) || 0;
-
-}
-
-
-/* =========================================================
-   27. INITIAL RENDER
-========================================================= */
-
-function initializeRender() {
-
-    renderTransactions();
-
-    renderBookmarks();
-
-    updateExpenseSummary();
-
-    updateHighScore();
-
-}
-
-
-/* =========================================================
-   28. INITIALIZE APPLICATION
-========================================================= */
-
-function initializeApp() {
-
-    initializeData();
+function initializeApplication() {
 
     initializeTabs();
 
+    initializeModals();
+
     initializeForms();
 
-    initializeFilters();
+    initializeFilterEvents();
 
-    initializeModals();
+    initializeResetEvents();
 
     initializeListEvents();
 
-    initializeQuiz();
-
-    initializeRender();
-
-}
+    initializeQuizEvents();
 
 
-/* =========================================================
-   29. DOM READY
-========================================================= */
+    renderTransactions();
 
-if (
-    document.readyState ===
-    "loading"
-) {
+    updateTransactionSummary();
 
-    document.addEventListener(
-        "DOMContentLoaded",
-        initializeApp
+    renderBookmarks();
+
+
+    $("#high-score-start")
+        .textContent =
+        highScore;
+
+    $("#high-score-result")
+        .textContent =
+        highScore;
+
+
+    /*
+       Karena panel memakai hidden,
+       pastikan kondisi awal sesuai route.
+    */
+
+    const activeTab =
+        getTabFromHash()
+        || localStorage.getItem(
+            STORAGE_KEYS.activeTab
+        )
+        || "expense";
+
+    activateTab(
+        activeTab,
+        true,
+        false
     );
-
-} else {
-
-    initializeApp();
-
 }
+
+
+/* =======================================================
+   34. START APPLICATION
+======================================================= */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    initializeApplication,
+    {
+        once: true
+    }
+);
