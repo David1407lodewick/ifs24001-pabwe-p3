@@ -1,0 +1,1258 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>CampusHub JS - PABWE P3</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f4f6f9;
+            color: #1f2937;
+            line-height: 1.6;
+        }
+
+        button,
+        input,
+        select {
+            font: inherit;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        .container {
+            width: min(1100px, 92%);
+            margin: auto;
+        }
+
+        header {
+            background: #2563eb;
+            color: white;
+            padding: 25px 0;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .brand h1 {
+            font-size: 28px;
+        }
+
+        .brand p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        main {
+            padding: 30px 0 50px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .tab-button {
+            border: none;
+            background: white;
+            color: #374151;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: 0.2s;
+        }
+
+        .tab-button:hover {
+            background: #eaf1ff;
+        }
+
+        .tab-button.active {
+            background: #2563eb;
+            color: white;
+        }
+
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 22px;
+            margin-bottom: 22px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.07);
+        }
+
+        .card h2 {
+            margin-bottom: 18px;
+            color: #111827;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group.full {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 11px 13px;
+            border: 1px solid #d1d5db;
+            border-radius: 7px;
+            outline: none;
+            background: white;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .btn {
+            border: none;
+            padding: 11px 18px;
+            border-radius: 7px;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+
+        .btn-success {
+            background: #16a34a;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #15803d;
+        }
+
+        .btn-small {
+            padding: 7px 11px;
+            font-size: 13px;
+        }
+
+        .form-actions {
+            margin-top: 18px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .error-message {
+            color: #dc2626;
+            font-size: 13px;
+            margin-top: 5px;
+        }
+
+        .success-message {
+            color: #15803d;
+            font-size: 13px;
+            margin-top: 5px;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 22px;
+        }
+
+        .summary-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.07);
+        }
+
+        .summary-card p {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .summary-card h3 {
+            margin-top: 5px;
+            font-size: 24px;
+        }
+
+        .income {
+            color: #16a34a;
+        }
+
+        .expense {
+            color: #dc2626;
+        }
+
+        .balance {
+            color: #2563eb;
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .item-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .list-item {
+            border: 1px solid #e5e7eb;
+            border-radius: 9px;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .list-item:hover {
+            background: #f9fafb;
+        }
+
+        .item-info h3 {
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+
+        .item-info p {
+            color: #6b7280;
+            font-size: 13px;
+        }
+
+        .item-actions {
+            display: flex;
+            gap: 7px;
+            flex-wrap: wrap;
+        }
+
+        .type-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .type-income {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .type-expense {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .amount {
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #6b7280;
+            padding: 30px;
+            border: 1px dashed #d1d5db;
+            border-radius: 8px;
+        }
+
+        .bookmark-url {
+            color: #2563eb;
+            word-break: break-all;
+            font-size: 13px;
+        }
+
+        .quiz-options {
+            display: grid;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .quiz-option {
+            border: 1px solid #d1d5db;
+            background: white;
+            padding: 13px;
+            border-radius: 8px;
+            text-align: left;
+            transition: 0.2s;
+        }
+
+        .quiz-option:hover {
+            border-color: #2563eb;
+            background: #eff6ff;
+        }
+
+        .quiz-option.selected {
+            border-color: #2563eb;
+            background: #dbeafe;
+        }
+
+        .quiz-feedback {
+            padding: 12px;
+            border-radius: 7px;
+            margin: 15px 0;
+            display: none;
+        }
+
+        .quiz-feedback.show {
+            display: block;
+        }
+
+        .quiz-feedback.correct {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .quiz-feedback.incorrect {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .quiz-progress {
+            color: #6b7280;
+            margin-bottom: 10px;
+        }
+
+        .quiz-result {
+            text-align: center;
+            padding: 30px 10px;
+        }
+
+        .quiz-result h2 {
+            font-size: 30px;
+        }
+
+        .quiz-score {
+            font-size: 45px;
+            font-weight: 700;
+            color: #2563eb;
+            margin: 15px 0;
+        }
+
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.55);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 1000;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            width: min(550px, 100%);
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .close-modal {
+            border: none;
+            background: transparent;
+            font-size: 25px;
+            color: #6b7280;
+        }
+
+        footer {
+            background: #111827;
+            color: white;
+            text-align: center;
+            padding: 25px 0;
+            margin-top: 30px;
+        }
+
+        footer p {
+            font-size: 14px;
+            opacity: 0.85;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .form-grid,
+            .summary-grid,
+            .filter-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-group.full {
+                grid-column: auto;
+            }
+
+            .list-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .item-actions {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <div class="container header-content">
+        <div class="brand">
+            <h1>CampusHub JS</h1>
+            <p>Aplikasi Kampus Berbasis Vanilla JavaScript</p>
+        </div>
+
+        <div>
+            <strong>PABWE P3</strong>
+        </div>
+    </div>
+</header>
+
+<main>
+    <div class="container">
+
+        <!-- TAB NAVIGATION -->
+        <div class="tabs">
+            <button class="tab-button active" data-tab="expense">
+                Pengeluaran
+            </button>
+
+            <button class="tab-button" data-tab="bookmark">
+                Bookmark
+            </button>
+
+            <button class="tab-button" data-tab="quiz">
+                Kuis
+            </button>
+        </div>
+
+        <!-- ================================================= -->
+        <!-- EXPENSE TRACKER -->
+        <!-- ================================================= -->
+
+        <section id="expense-panel" class="tab-panel active">
+
+            <div class="card">
+                <h2>Catatan Pengeluaran / Pemasukan</h2>
+
+                <form id="transaction-form">
+
+                    <div class="form-grid">
+
+                        <div class="form-group">
+                            <label for="transaction-title">
+                                Judul
+                            </label>
+
+                            <input
+                                type="text"
+                                id="transaction-title"
+                                placeholder="Contoh: Makan siang"
+                            >
+
+                            <div
+                                id="transaction-title-error"
+                                class="error-message"
+                            ></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="transaction-amount">
+                                Jumlah
+                            </label>
+
+                            <input
+                                type="number"
+                                id="transaction-amount"
+                                min="1"
+                                placeholder="Contoh: 25000"
+                            >
+
+                            <div
+                                id="transaction-amount-error"
+                                class="error-message"
+                            ></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="transaction-type">
+                                Tipe
+                            </label>
+
+                            <select id="transaction-type">
+                                <option value="expense">
+                                    Pengeluaran
+                                </option>
+
+                                <option value="income">
+                                    Pemasukan
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="transaction-date">
+                                Tanggal
+                            </label>
+
+                            <input
+                                type="date"
+                                id="transaction-date"
+                            >
+
+                            <div
+                                id="transaction-date-error"
+                                class="error-message"
+                            ></div>
+                        </div>
+
+                        <div class="form-group full">
+                            <label for="transaction-category">
+                                Kategori
+                            </label>
+
+                            <input
+                                type="text"
+                                id="transaction-category"
+                                placeholder="Contoh: Makanan, Transportasi, Gaji"
+                            >
+
+                            <div
+                                id="transaction-category-error"
+                                class="error-message"
+                            ></div>
+                        </div>
+
+                    </div>
+
+                    <div class="form-actions">
+                        <button
+                            type="submit"
+                            class="btn btn-primary"
+                        >
+                            Tambah Transaksi
+                        </button>
+
+                        <button
+                            type="reset"
+                            id="transaction-reset"
+                            class="btn btn-secondary"
+                        >
+                            Reset
+                        </button>
+                    </div>
+
+                    <div id="transaction-form-message"></div>
+
+                </form>
+            </div>
+
+            <!-- SUMMARY -->
+
+            <div class="summary-grid">
+
+                <div class="summary-card">
+                    <p>Total Pemasukan</p>
+                    <h3
+                        id="total-income"
+                        class="income"
+                    >
+                        Rp0
+                    </h3>
+                </div>
+
+                <div class="summary-card">
+                    <p>Total Pengeluaran</p>
+                    <h3
+                        id="total-expense"
+                        class="expense"
+                    >
+                        Rp0
+                    </h3>
+                </div>
+
+                <div class="summary-card">
+                    <p>Saldo</p>
+                    <h3
+                        id="total-balance"
+                        class="balance"
+                    >
+                        Rp0
+                    </h3>
+                </div>
+
+            </div>
+
+            <!-- FILTER -->
+
+            <div class="card">
+
+                <h2>Daftar Transaksi</h2>
+
+                <div class="filter-grid">
+
+                    <input
+                        type="search"
+                        id="transaction-search"
+                        placeholder="Cari transaksi..."
+                    >
+
+                    <select id="transaction-filter">
+                        <option value="all">
+                            Semua Tipe
+                        </option>
+
+                        <option value="income">
+                            Pemasukan
+                        </option>
+
+                        <option value="expense">
+                            Pengeluaran
+                        </option>
+                    </select>
+
+                    <select id="transaction-sort">
+
+                        <option value="newest">
+                            Terbaru
+                        </option>
+
+                        <option value="oldest">
+                            Terlama
+                        </option>
+
+                        <option value="highest">
+                            Jumlah Terbesar
+                        </option>
+
+                        <option value="lowest">
+                            Jumlah Terkecil
+                        </option>
+
+                        <option value="title">
+                            Berdasarkan Judul
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <div
+                    id="transaction-list"
+                    class="item-list"
+                ></div>
+
+            </div>
+
+        </section>
+
+        <!-- ================================================= -->
+        <!-- BOOKMARK MANAGER -->
+        <!-- ================================================= -->
+
+        <section
+            id="bookmark-panel"
+            class="tab-panel"
+        >
+
+            <div class="card">
+
+                <h2>Bookmark / Link Manager</h2>
+
+                <form id="bookmark-form">
+
+                    <div class="form-grid">
+
+                        <div class="form-group">
+                            <label for="bookmark-title">
+                                Nama Bookmark
+                            </label>
+
+                            <input
+                                type="text"
+                                id="bookmark-title"
+                                placeholder="Contoh: Google"
+                            >
+
+                            <div
+                                id="bookmark-title-error"
+                                class="error-message"
+                            ></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="bookmark-url">
+                                URL
+                            </label>
+
+                            <input
+                                type="url"
+                                id="bookmark-url"
+                                placeholder="https://example.com"
+                            >
+
+                            <div
+                                id="bookmark-url-error"
+                                class="error-message"
+                            ></div>
+                        </div>
+
+                        <div class="form-group full">
+                            <label for="bookmark-category">
+                                Kategori
+                            </label>
+
+                            <input
+                                type="text"
+                                id="bookmark-category"
+                                placeholder="Contoh: Belajar"
+                            >
+
+                            <div
+                                id="bookmark-category-error"
+                                class="error-message"
+                            ></div>
+                        </div>
+
+                    </div>
+
+                    <div class="form-actions">
+
+                        <button
+                            type="submit"
+                            class="btn btn-primary"
+                        >
+                            Tambah Bookmark
+                        </button>
+
+                        <button
+                            type="reset"
+                            class="btn btn-secondary"
+                            id="bookmark-reset"
+                        >
+                            Reset
+                        </button>
+
+                    </div>
+
+                    <div id="bookmark-form-message"></div>
+
+                </form>
+
+            </div>
+
+            <div class="card">
+
+                <h2>Daftar Bookmark</h2>
+
+                <div class="filter-grid">
+
+                    <input
+                        type="search"
+                        id="bookmark-search"
+                        placeholder="Cari bookmark..."
+                    >
+
+                    <select id="bookmark-sort">
+
+                        <option value="newest">
+                            Terbaru
+                        </option>
+
+                        <option value="oldest">
+                            Terlama
+                        </option>
+
+                        <option value="title">
+                            Berdasarkan Nama
+                        </option>
+
+                        <option value="category">
+                            Berdasarkan Kategori
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <div
+                    id="bookmark-list"
+                    class="item-list"
+                ></div>
+
+            </div>
+
+        </section>
+
+        <!-- ================================================= -->
+        <!-- QUIZ -->
+        <!-- ================================================= -->
+
+        <section
+            id="quiz-panel"
+            class="tab-panel"
+        >
+
+            <div class="card">
+
+                <!-- START -->
+
+                <div id="quiz-start">
+
+                    <h2>Kuis Interaktif JavaScript</h2>
+
+                    <p>
+                        Uji pemahaman kamu mengenai konsep dasar
+                        JavaScript, DOM, array, object, function,
+                        CRUD, event, dan localStorage.
+                    </p>
+
+                    <div class="form-actions">
+
+                        <button
+                            id="start-quiz"
+                            class="btn btn-primary"
+                        >
+                            Mulai Kuis
+                        </button>
+
+                    </div>
+
+                    <p style="margin-top:15px;">
+                        High Score:
+                        <strong id="high-score-start">
+                            0
+                        </strong>
+                    </p>
+
+                </div>
+
+                <!-- QUESTION -->
+
+                <div
+                    id="quiz-question"
+                    class="hidden"
+                >
+
+                    <div class="quiz-progress">
+                        Soal
+                        <span id="current-question-number">
+                            1
+                        </span>
+                        dari
+                        <span id="total-question-number">
+                            5
+                        </span>
+                    </div>
+
+                    <h2 id="question-text">
+                        Pertanyaan
+                    </h2>
+
+                    <div
+                        id="quiz-options"
+                        class="quiz-options"
+                    ></div>
+
+                    <div
+                        id="quiz-feedback"
+                        class="quiz-feedback"
+                    ></div>
+
+                    <div class="form-actions">
+
+                        <button
+                            id="submit-answer"
+                            class="btn btn-primary"
+                        >
+                            Jawab
+                        </button>
+
+                        <button
+                            id="next-question"
+                            class="btn btn-success hidden"
+                        >
+                            Soal Berikutnya
+                        </button>
+
+                    </div>
+
+                </div>
+
+                <!-- RESULT -->
+
+                <div
+                    id="quiz-result"
+                    class="quiz-result hidden"
+                >
+
+                    <h2>Kuis Selesai!</h2>
+
+                    <div
+                        id="quiz-score"
+                        class="quiz-score"
+                    >
+                        0/5
+                    </div>
+
+                    <p>
+                        Persentase:
+                        <strong id="quiz-percentage">
+                            0%
+                        </strong>
+                    </p>
+
+                    <p>
+                        High Score:
+                        <strong id="high-score-result">
+                            0
+                        </strong>
+                    </p>
+
+                    <div class="form-actions"
+                         style="justify-content:center;">
+
+                        <button
+                            id="restart-quiz"
+                            class="btn btn-primary"
+                        >
+                            Ulangi Kuis
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </div>
+</main>
+
+<!-- ================================================= -->
+<!-- TRANSACTION EDIT MODAL -->
+<!-- ================================================= -->
+
+<div
+    id="transaction-modal"
+    class="modal"
+>
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+
+            <h2>Edit Transaksi</h2>
+
+            <button
+                class="close-modal"
+                data-close-modal="transaction-modal"
+            >
+                &times;
+            </button>
+
+        </div>
+
+        <form id="transaction-edit-form">
+
+            <input
+                type="hidden"
+                id="edit-transaction-id"
+            >
+
+            <div class="form-grid">
+
+                <div class="form-group">
+                    <label for="edit-transaction-title">
+                        Judul
+                    </label>
+
+                    <input
+                        type="text"
+                        id="edit-transaction-title"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-transaction-amount">
+                        Jumlah
+                    </label>
+
+                    <input
+                        type="number"
+                        id="edit-transaction-amount"
+                        min="1"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-transaction-type">
+                        Tipe
+                    </label>
+
+                    <select id="edit-transaction-type">
+
+                        <option value="expense">
+                            Pengeluaran
+                        </option>
+
+                        <option value="income">
+                            Pemasukan
+                        </option>
+
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-transaction-date">
+                        Tanggal
+                    </label>
+
+                    <input
+                        type="date"
+                        id="edit-transaction-date"
+                    >
+                </div>
+
+                <div class="form-group full">
+                    <label for="edit-transaction-category">
+                        Kategori
+                    </label>
+
+                    <input
+                        type="text"
+                        id="edit-transaction-category"
+                    >
+                </div>
+
+            </div>
+
+            <div class="form-actions">
+
+                <button
+                    type="submit"
+                    class="btn btn-primary"
+                >
+                    Simpan Perubahan
+                </button>
+
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    data-close-modal="transaction-modal"
+                >
+                    Batal
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+<!-- ================================================= -->
+<!-- BOOKMARK EDIT MODAL -->
+<!-- ================================================= -->
+
+<div
+    id="bookmark-modal"
+    class="modal"
+>
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+
+            <h2>Edit Bookmark</h2>
+
+            <button
+                class="close-modal"
+                data-close-modal="bookmark-modal"
+            >
+                &times;
+            </button>
+
+        </div>
+
+        <form id="bookmark-edit-form">
+
+            <input
+                type="hidden"
+                id="edit-bookmark-id"
+            >
+
+            <div class="form-grid">
+
+                <div class="form-group">
+                    <label for="edit-bookmark-title">
+                        Nama Bookmark
+                    </label>
+
+                    <input
+                        type="text"
+                        id="edit-bookmark-title"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-bookmark-url">
+                        URL
+                    </label>
+
+                    <input
+                        type="url"
+                        id="edit-bookmark-url"
+                    >
+                </div>
+
+                <div class="form-group full">
+                    <label for="edit-bookmark-category">
+                        Kategori
+                    </label>
+
+                    <input
+                        type="text"
+                        id="edit-bookmark-category"
+                    >
+                </div>
+
+            </div>
+
+            <div class="form-actions">
+
+                <button
+                    type="submit"
+                    class="btn btn-primary"
+                >
+                    Simpan Perubahan
+                </button>
+
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    data-close-modal="bookmark-modal"
+                >
+                    Batal
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+<footer>
+
+    <div class="container">
+
+        <p>
+            CampusHub JS &copy; 2026
+        </p>
+
+        <p>
+            David Lodewick Simbolon |
+            NIM 11S24001 |
+            PABWE
+        </p>
+
+    </div>
+
+</footer>
+
+<script src="assets/script.js"></script>
+
+</body>
+</html>
