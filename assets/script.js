@@ -243,20 +243,135 @@ function clearErrors(selectors) {
 
 /*
 =========================================================
-6. TAB MANAGEMENT
+6. TAB MANAGEMENT + URL HASH
 =========================================================
 */
 
-function activateTab(tabName, save = true) {
+/*
+    URL YANG DIGUNAKAN:
 
-    const buttons = $$(".tab-button");
+    index.html#pengeluaran
+    index.html#bookmark
+    index.html#kuis
 
-    const panels = $$(".tab-panel");
+    Semua fitur tetap berada dalam SATU index.html.
+
+    Tidak perlu membuat:
+    - bookmark.html
+    - kuis.html
+
+    URL hash digunakan agar masing-masing tab
+    memiliki alamat yang berbeda.
+*/
+
+
+/*
+---------------------------------------------------------
+MENGAMBIL TAB DARI URL
+---------------------------------------------------------
+*/
+
+function getTabFromHash() {
+
+    const hash =
+        window.location.hash
+            .replace("#", "")
+            .toLowerCase()
+            .trim();
+
+
+    const routes = {
+
+        pengeluaran: "expense",
+
+        expense: "expense",
+
+        bookmark: "bookmark",
+
+        bookmarks: "bookmark",
+
+        kuis: "quiz",
+
+        quiz: "quiz"
+
+    };
+
+
+    return routes[hash] || null;
+
+}
+
+
+/*
+---------------------------------------------------------
+MENGUBAH NAMA TAB MENJADI HASH URL
+---------------------------------------------------------
+*/
+
+function getHashFromTab(tabName) {
+
+    const routes = {
+
+        expense: "pengeluaran",
+
+        bookmark: "bookmark",
+
+        quiz: "kuis"
+
+    };
+
+
+    return routes[tabName] || "pengeluaran";
+
+}
+
+
+/*
+---------------------------------------------------------
+MENGAKTIFKAN TAB
+---------------------------------------------------------
+*/
+
+function activateTab(
+    tabName,
+    save = true,
+    updateUrl = true
+) {
+
+    const validTabs = [
+        "expense",
+        "bookmark",
+        "quiz"
+    ];
+
+
+    /*
+        Jika tab tidak valid,
+        gunakan tab Pengeluaran.
+    */
+
+    if (!validTabs.includes(tabName)) {
+
+        tabName = "expense";
+
+    }
+
+
+    /*
+    -----------------------------------------------------
+    AKTIFKAN BUTTON
+    -----------------------------------------------------
+    */
+
+    const buttons =
+        $$(".tab-button");
+
 
     buttons.forEach(button => {
 
         const isActive =
             button.dataset.tab === tabName;
+
 
         button.classList.toggle(
             "active",
@@ -264,6 +379,16 @@ function activateTab(tabName, save = true) {
         );
 
     });
+
+
+    /*
+    -----------------------------------------------------
+    AKTIFKAN PANEL
+    -----------------------------------------------------
+    */
+
+    const panels =
+        $$(".tab-panel");
 
 
     panels.forEach(panel => {
@@ -276,6 +401,12 @@ function activateTab(tabName, save = true) {
     });
 
 
+    /*
+    -----------------------------------------------------
+    SIMPAN TAB KE LOCAL STORAGE
+    -----------------------------------------------------
+    */
+
     if (save) {
 
         localStorage.setItem(
@@ -285,16 +416,47 @@ function activateTab(tabName, save = true) {
 
     }
 
+
+    /*
+    -----------------------------------------------------
+    UPDATE URL
+    -----------------------------------------------------
+    */
+
+    if (updateUrl) {
+
+        const targetHash =
+            `#${getHashFromTab(tabName)}`;
+
+
+        if (
+            window.location.hash !==
+            targetHash
+        ) {
+
+            window.location.hash =
+                targetHash;
+
+        }
+
+    }
+
 }
 
 
+/*
+---------------------------------------------------------
+INISIALISASI TAB
+---------------------------------------------------------
+*/
+
 function initializeTabs() {
 
-    const savedTab =
-        localStorage.getItem(
-            STORAGE_KEYS.activeTab
-        ) || "expense";
-
+    /*
+    -----------------------------------------------------
+    EVENT CLICK TAB
+    -----------------------------------------------------
+    */
 
     $$(".tab-button").forEach(button => {
 
@@ -302,8 +464,14 @@ function initializeTabs() {
             "click",
             () => {
 
+                const tabName =
+                    button.dataset.tab;
+
+
                 activateTab(
-                    button.dataset.tab
+                    tabName,
+                    true,
+                    true
                 );
 
             }
@@ -312,9 +480,67 @@ function initializeTabs() {
     });
 
 
+    /*
+    -----------------------------------------------------
+    CEK TAB DARI URL
+    -----------------------------------------------------
+    */
+
+    const tabFromUrl =
+        getTabFromHash();
+
+
+    /*
+    -----------------------------------------------------
+    CEK TAB DARI LOCAL STORAGE
+    -----------------------------------------------------
+    */
+
+    const savedTab =
+        localStorage.getItem(
+            STORAGE_KEYS.activeTab
+        ) || "expense";
+
+
+    /*
+    -----------------------------------------------------
+    PRIORITAS:
+
+    1. URL
+    2. Local Storage
+    3. Pengeluaran
+    -----------------------------------------------------
+    */
+
     activateTab(
-        savedTab,
-        false
+        tabFromUrl || savedTab,
+        true,
+        true
+    );
+
+
+    /*
+    -----------------------------------------------------
+    JIKA HASH URL BERUBAH
+    -----------------------------------------------------
+    */
+
+    window.addEventListener(
+        "hashchange",
+        () => {
+
+            const nextTab =
+                getTabFromHash()
+                || "expense";
+
+
+            activateTab(
+                nextTab,
+                true,
+                false
+            );
+
+        }
     );
 
 }
